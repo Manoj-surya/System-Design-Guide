@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 03 — HLD Core Components</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b0f;
+    --surface: #0e1218;
+    --surface2: #131920;
+    --border: #1a2230;
+    --accent1: #f59e0b;
+    --accent1-light: #fcd34d;
+    --accent2: #00e5ff;
+    --accent3: #10b981;
+    --accent4: #7c3aed;
+    --accent4-light: #a78bfa;
+    --accent5: #ef4444;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --muted: #4a5568;
+    --light: #8899aa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* subtle radial glow top-right */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 28px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 56px;
+    animation: fadeDown 0.7s ease forwards;
+  }
+  .breadcrumb {
+    font-size: 11px; letter-spacing: 2px; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .breadcrumb span { color: var(--accent1-light); }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 10%, var(--accent1-light) 55%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 14px;
+  }
+  .header-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .badge {
+    font-size: 10px; letter-spacing: 1.5px; padding: 4px 12px;
+    border-radius: 2px; text-transform: uppercase;
+  }
+  .badge-amber  { background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.3);  color: var(--accent1-light); }
+  .badge-cyan   { background: rgba(0,229,255,0.08);  border: 1px solid rgba(0,229,255,0.25);  color: var(--accent2); }
+  .badge-green  { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: var(--accent3); }
+  .badge-purple { background: rgba(124,58,237,0.1);  border: 1px solid rgba(124,58,237,0.3);  color: var(--accent4-light); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 24px 28px; margin-bottom: 60px;
+    animation: fadeUp 0.5s ease 0.1s forwards; opacity: 0;
+  }
+  .toc-title {
+    font-family: 'Syne', sans-serif; font-size: 0.72rem;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent1-light); margin-bottom: 14px;
+  }
+  .toc-list {
+    list-style: none;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px 24px;
+  }
+  .toc-list li a {
+    font-size: 12px; color: var(--light); text-decoration: none;
+    display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+  }
+  .toc-list li a:hover { color: var(--accent1-light); }
+  .toc-list li a::before { content: '→'; color: var(--accent1-light); font-size: 11px; opacity: 0.6; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 76px;
+    animation: fadeUp 0.6s ease forwards; opacity: 0;
+  }
+  .section:nth-child(1) { animation-delay: 0.12s; }
+  .section:nth-child(2) { animation-delay: 0.20s; }
+  .section:nth-child(3) { animation-delay: 0.28s; }
+  .section:nth-child(4) { animation-delay: 0.36s; }
+  .section:nth-child(5) { animation-delay: 0.44s; }
+  .section:nth-child(6) { animation-delay: 0.52s; }
+  .section:nth-child(7) { animation-delay: 0.60s; }
+  .section:nth-child(8) { animation-delay: 0.68s; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent1); margin-bottom: 5px; opacity: 0.75;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 1.65rem; font-weight: 700;
+    color: #fff; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+  }
+  .subsection { margin-top: 38px; }
+  .subsection-title {
+    font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700;
+    color: var(--accent1-light); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .subsection-title::before {
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; background: var(--accent1);
+    border-radius: 50%; flex-shrink: 0;
+  }
+  p { font-size: 13px; color: var(--light); margin-bottom: 14px; line-height: 1.85; }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: #060809; border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 20px 22px; margin: 16px 0; overflow-x: auto;
+  }
+  .code-block-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent1); margin-bottom: 10px; opacity: 0.8;
+  }
+  pre {
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    color: #fde68a; line-height: 1.75; white-space: pre;
+  }
+  pre .dim     { color: #2d3748; }
+  pre .keyword { color: var(--accent2); }
+  pre .string  { color: #86efac; }
+  pre .arrow   { color: var(--accent1-light); }
+  pre .label   { color: var(--accent1); }
+  pre .good    { color: var(--accent3); }
+  pre .bad     { color: var(--accent5); }
+  pre .purple  { color: var(--accent4-light); }
+  pre .pink    { color: var(--accent6); }
+  pre .white   { color: #fff; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #060809; border-bottom: 2px solid var(--accent1); }
+  thead th {
+    padding: 10px 16px; text-align: left;
+    font-family: 'Syne', sans-serif; font-size: 11px;
+    letter-spacing: 1px; color: #fff; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 16px; color: var(--light); vertical-align: top; line-height: 1.6; font-size: 12px; }
+  tbody td:first-child { color: var(--accent1-light); font-weight: 700; white-space: nowrap; }
+
+  /* ── Callouts ── */
+  .callout { padding: 18px 22px; margin: 18px 0; font-size: 12px; line-height: 1.75; }
+  .callout-amber  { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);  border-left: 3px solid var(--accent1); }
+  .callout-cyan   { background: rgba(0,229,255,0.05);  border: 1px solid rgba(0,229,255,0.18);  border-left: 3px solid var(--accent2); }
+  .callout-green  { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2);  border-left: 3px solid var(--accent3); }
+  .callout-purple { background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.22); border-left: 3px solid var(--accent4); }
+  .callout-red    { background: rgba(239,68,68,0.05);  border: 1px solid rgba(239,68,68,0.18);  border-left: 3px solid var(--accent5); }
+  .callout-pink   { background: rgba(236,72,153,0.05); border: 1px solid rgba(236,72,153,0.2);  border-left: 3px solid var(--accent6); }
+  .callout-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .callout-amber  .callout-title { color: var(--accent1-light); }
+  .callout-cyan   .callout-title { color: var(--accent2); }
+  .callout-green  .callout-title { color: var(--accent3); }
+  .callout-purple .callout-title { color: var(--accent4-light); }
+  .callout-red    .callout-title { color: var(--accent5); }
+  .callout-pink   .callout-title { color: var(--accent6); }
+  .callout p { color: var(--light); margin: 0; font-size: 12px; }
+
+  /* ── Key grid ── */
+  .key-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px; margin: 16px 0;
+  }
+  .key-card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 18px 20px; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .key-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .key-card-title { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .key-card p { font-size: 11.5px; color: var(--muted); margin: 0; line-height: 1.65; }
+
+  /* ── Policy cards (write policies / eviction) ── */
+  .policy-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .policy-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--card-color, var(--accent1));
+    padding: 16px 18px; transition: transform 0.2s;
+  }
+  .policy-card:hover { transform: translateY(-2px); }
+  .policy-type { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--card-color, var(--accent1)); margin-bottom: 6px; opacity: 0.8; }
+  .policy-name { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .policy-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+  /* ── LB algorithm row ── */
+  .algo-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .algo-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 14px 16px; transition: transform 0.2s;
+  }
+  .algo-card:hover { transform: translateX(3px); }
+  .algo-name { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--accent2); margin-bottom: 6px; }
+  .algo-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.55; }
+
+  /* ── Rate limit algo cards ── */
+  .rl-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .rl-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--accent5);
+    padding: 16px 18px;
+  }
+  .rl-name { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--accent5); margin-bottom: 8px; }
+  .rl-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+  /* ── MQ comparison ── */
+  .mq-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;
+  }
+  .mq-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--mq-color, var(--accent1));
+    padding: 18px 20px;
+  }
+  .mq-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--mq-color, var(--accent1)); margin-bottom: 10px; }
+  .mq-card ul { list-style: none; }
+  .mq-card ul li { font-size: 11px; color: var(--muted); padding: 3px 0 3px 14px; position: relative; line-height: 1.55; }
+  .mq-card ul li::before { content: '›'; position: absolute; left: 0; color: var(--mq-color, var(--accent1)); }
+
+  /* ── Realtime comparison ── */
+  .rt-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .rt-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 3px solid var(--rt-color, var(--accent3));
+    padding: 16px 18px;
+  }
+  .rt-name { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--rt-color, var(--accent3)); margin-bottom: 8px; }
+  .rt-card p { font-size: 11px; color: var(--muted); margin: 0 0 6px 0; line-height: 1.55; }
+  .rt-use { font-size: 10px; color: var(--rt-color, var(--accent3)); opacity: 0.8; font-style: italic; }
+
+  /* ── Push Pull visual ── */
+  .pp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .pp-card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 20px; border-top: 3px solid var(--pp-color);
+  }
+  .pp-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--pp-color); margin-bottom: 10px; }
+  .pp-card p { font-size: 11.5px; color: var(--muted); margin: 0 0 8px 0; line-height: 1.6; }
+  .pp-examples { font-size: 10px; color: var(--pp-color); opacity: 0.85; }
+
+  /* ── Golden rule ── */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(245,158,11,0.07), rgba(0,229,255,0.05));
+    border: 1px solid rgba(245,158,11,0.2);
+    padding: 28px 32px; margin-top: 64px; text-align: center;
+    animation: fadeUp 0.6s ease 0.7s forwards; opacity: 0;
+  }
+  .golden-rule-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent1); margin-bottom: 12px; }
+  .golden-rule p { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; color: #fff; line-height: 1.65; margin: 0; }
+
+  .nav-row { display: flex; justify-content: space-between; margin-top: 48px; gap: 12px; flex-wrap: wrap; }
+  .nav-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 13px 22px; font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--accent1-light); text-decoration: none;
+    display: flex; align-items: center; gap: 8px; transition: background 0.2s, border-color 0.2s;
+  }
+  .nav-btn:hover { background: rgba(245,158,11,0.06); border-color: var(--accent1); }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 700px) {
+    .mq-grid, .pp-grid { grid-template-columns: 1fr; }
+    .key-grid, .policy-grid, .algo-grid, .rl-grid, .rt-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 03</span></div>
+    <h1>HLD Core<br>Components</h1>
+    <div class="header-meta">
+      <span class="badge badge-amber">Week 5 – 7</span>
+      <span class="badge badge-cyan">8 Core Topics</span>
+      <span class="badge badge-green">Caching · CDN · LB · Queues</span>
+      <span class="badge badge-purple">WebSockets · Rate Limiting</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#caching">Caching — How & Why</a></li>
+      <li><a href="#write-policies">Cache Write Policies</a></li>
+      <li><a href="#eviction">Cache Eviction Algorithms</a></li>
+      <li><a href="#cdn">CDN — Content Delivery Networks</a></li>
+      <li><a href="#lb">Load Balancers</a></li>
+      <li><a href="#rate-limit">Rate Limiting Algorithms</a></li>
+      <li><a href="#mq">Message Queues — Kafka vs RabbitMQ</a></li>
+      <li><a href="#realtime">Real-Time Communication</a></li>
+      <li><a href="#pushpull">Push vs Pull Architecture</a></li>
+    </ul>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 1: CACHING             -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="caching">
+    <div class="section-label">Topic 01</div>
+    <div class="section-title">Caching — How &amp; Why</div>
+
+    <p>A cache is a <strong style="color:#fff;">fast, temporary storage layer</strong> that sits between your application and your database. Its purpose is simple: instead of hitting the database on every request, store frequently-accessed data in memory so it can be served in microseconds instead of milliseconds.</p>
+
+    <div class="code-block">
+      <div class="code-block-label">Without Cache vs With Cache</div>
+      <pre>
+<span class="bad">Without Cache:</span>
+  User requests profile  →  App  →  Database  →  App  →  User
+  Latency: ~100–200ms (disk read + query execution)
+  At 10,000 req/sec: database gets hammered, becomes bottleneck
+
+<span class="good">With Cache:</span>
+  User requests profile  →  App  →  <span class="keyword">Cache HIT</span>  →  User
+  Latency: ~1ms (memory read)
+  Database only gets called on CACHE MISS (first request or expired data)</pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Redis vs Memcached</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Redis</th><th>Memcached</th></tr></thead>
+          <tbody>
+            <tr><td>Data structures</td><td>Strings, Hashes, Lists, Sets, Sorted Sets, Streams</td><td>Only strings (key-value)</td></tr>
+            <tr><td>Persistence</td><td>Optional (RDB snapshots, AOF logs)</td><td>None — purely in-memory</td></tr>
+            <tr><td>Replication</td><td>Master-replica, Sentinel, Cluster</td><td>No built-in replication</td></tr>
+            <tr><td>Pub/Sub</td><td>Yes — built-in</td><td>No</td></tr>
+            <tr><td>Lua scripting</td><td>Yes</td><td>No</td></tr>
+            <tr><td>Multi-threading</td><td>Single-threaded (mostly)</td><td>Multi-threaded</td></tr>
+            <tr><td>Best for</td><td>Everything — sessions, queues, leaderboards, rate limiting</td><td>Simple, high-speed object caching only</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-amber">
+        <div class="callout-title">Always Default to Redis</div>
+        <p>In 2024+, Redis is the industry default for caching. Memcached is faster at simple string lookups under very specific conditions, but Redis's rich data structures, persistence, and pub/sub make it the right choice for almost all system design scenarios. When in doubt, say Redis.</p>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Where to Place a Cache</div>
+      <div class="code-block">
+        <div class="code-block-label">Cache Placement in a System</div>
+        <pre>
+<span class="label">Client-Side Cache</span>   →  Browser cache, mobile app cache
+                       Fastest — no network needed
+                       Limited control over invalidation
+
+<span class="label">CDN Cache</span>          →  Edge servers near users (Phase 3 - Topic 4)
+                       Great for static assets (images, JS, video)
+
+<span class="label">Application Cache</span>  →  In-process memory (e.g. local HashMap in Node.js)
+                       Fastest server-side option but not shared across servers
+                       Breaks with horizontal scaling
+
+<span class="label">Distributed Cache</span>  →  <span class="keyword">Redis / Memcached</span>  ← Most common in system design
+                       Shared across ALL app servers
+                       Works perfectly with horizontal scaling
+
+<span class="label">Database Cache</span>     →  Query result cache built into MySQL/PostgreSQL
+                       Automatic but limited control</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title" id="write-policies">Cache Write Policies</div>
+      <p>When data is written, how do we keep the cache and database in sync? There are three strategies, each with different trade-offs between consistency and performance.</p>
+
+      <div class="policy-grid">
+        <div class="policy-card" style="--card-color: #00e5ff;">
+          <div class="policy-type">Write Policy 01</div>
+          <div class="policy-name">Write-Through</div>
+          <p>Write to cache AND database simultaneously on every write. Cache is always consistent with DB. Slower writes (both must succeed) but zero stale data risk.</p>
+        </div>
+        <div class="policy-card" style="--card-color: #10b981;">
+          <div class="policy-type">Write Policy 02</div>
+          <div class="policy-name">Write-Back (Write-Behind)</div>
+          <p>Write to cache only, acknowledge immediately. Database is updated asynchronously in the background. Fastest writes but risk of data loss if cache dies before DB sync.</p>
+        </div>
+        <div class="policy-card" style="--card-color: #f59e0b;">
+          <div class="policy-type">Write Policy 03</div>
+          <div class="policy-name">Write-Around</div>
+          <p>Write directly to database, bypass cache entirely. Cache is only populated on reads. Avoids polluting cache with write-heavy data rarely read again.</p>
+        </div>
+        <div class="policy-card" style="--card-color: #a78bfa;">
+          <div class="policy-type">Read Strategy</div>
+          <div class="policy-name">Cache-Aside (Lazy Loading)</div>
+          <p>App checks cache first. On miss, reads from DB and populates cache. Most flexible strategy — app controls what gets cached. Industry default pattern.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Cache-Aside Pattern — Code Flow</div>
+        <pre>
+<span class="keyword">function</span> getUserProfile(userId):
+  <span class="dim">// Step 1: Check cache</span>
+  data = redis.<span class="string">get</span>(`user:${userId}`)
+  
+  <span class="keyword">if</span> data exists:
+    <span class="good">return data  ← CACHE HIT (fast, ~1ms)</span>
+  
+  <span class="dim">// Step 2: Cache miss — go to database</span>
+  data = database.<span class="string">query</span>(`SELECT * FROM users WHERE id = ${userId}`)
+  
+  <span class="dim">// Step 3: Populate cache for next time</span>
+  redis.<span class="string">set</span>(`user:${userId}`, data, TTL=<span class="label">3600</span>)  <span class="dim">← expires in 1 hour</span>
+  
+  <span class="good">return data  ← CACHE MISS (slow, ~100ms, but only first time)</span></pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title" id="eviction">Cache Eviction Algorithms</div>
+      <p>Cache has limited memory. When it's full and a new item needs to be stored, something must be evicted. The algorithm decides <em>which item to remove</em>.</p>
+
+      <div class="policy-grid">
+        <div class="policy-card" style="--card-color: #f59e0b;">
+          <div class="policy-type">Eviction 01</div>
+          <div class="policy-name">LRU</div>
+          <p><strong style="color:#fff;">Least Recently Used.</strong> Evict the item that hasn't been accessed for the longest time. Most popular. Works well for general-purpose caching.</p>
+        </div>
+        <div class="policy-card" style="--card-color: #00e5ff;">
+          <div class="policy-type">Eviction 02</div>
+          <div class="policy-name">LFU</div>
+          <p><strong style="color:#fff;">Least Frequently Used.</strong> Evict the item accessed the fewest times overall. Better than LRU when access patterns are stable (popular items stay forever).</p>
+        </div>
+        <div class="policy-card" style="--card-color: #10b981;">
+          <div class="policy-type">Eviction 03</div>
+          <div class="policy-name">Segmented LRU</div>
+          <p><strong style="color:#fff;">Two-tier LRU.</strong> New items enter a probationary segment. Only items accessed again move to the protected segment. Protects hot items from one-time scan eviction.</p>
+        </div>
+        <div class="policy-card" style="--card-color: #ec4899;">
+          <div class="policy-type">Eviction 04</div>
+          <div class="policy-name">TTL (Time-Based)</div>
+          <p><strong style="color:#fff;">Time To Live.</strong> Every item expires after a set time regardless of access. Simplest form of invalidation. Used alongside LRU/LFU in practice.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">Cache Stampede — The Hidden Danger</div>
+        <p>Imagine 10,000 users all request a popular item at the exact moment its TTL expires. All 10,000 requests find a cache miss simultaneously and all hit the database at once — potentially crashing it. Solutions: <strong style="color:#fff;">Jitter</strong> (randomise TTL slightly so not all expire together), <strong style="color:#fff;">Probabilistic early expiration</strong> (start refreshing before TTL ends), or <strong style="color:#fff;">Lock</strong> (only one request refreshes the cache, others wait).</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 2: CDN                 -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="cdn">
+    <div class="section-label">Topic 02</div>
+    <div class="section-title">CDN — Content Delivery Networks</div>
+
+    <p>A CDN is a globally distributed network of servers (called <strong style="color:#fff;">Points of Presence / Edge Servers</strong>) that cache and serve static content from a location physically close to the user. Instead of every user hitting your origin server in Mumbai, a user in London gets content from a CDN edge server in London.</p>
+
+    <div class="code-block">
+      <div class="code-block-label">CDN Request Flow</div>
+      <pre>
+<span class="bad">Without CDN:</span>
+  User (London) → Request → Origin Server (Mumbai) → Response
+  Latency: ~200ms  (physical distance + network hops)
+
+<span class="good">With CDN:</span>
+  User (London) → Request → CDN Edge (London) → Response
+  Latency: ~5ms   (content already cached at nearest edge)
+
+  <span class="dim">On first request (cache miss):</span>
+  CDN Edge (London) → <span class="keyword">pulls from</span> Origin (Mumbai) → caches it → serves user
+  <span class="dim">All subsequent requests served from edge cache</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Push CDN vs Pull CDN</div>
+      <div class="mq-grid">
+        <div class="mq-card" style="--mq-color: #f59e0b;">
+          <div class="mq-name">Push CDN</div>
+          <ul>
+            <li>You manually upload assets to CDN in advance</li>
+            <li>Content is there before anyone requests it</li>
+            <li>No cache miss on first request</li>
+            <li>Good for: large video files, known-popular content</li>
+            <li>Netflix pre-pushes new episodes before release</li>
+            <li>You control when content is refreshed</li>
+          </ul>
+        </div>
+        <div class="mq-card" style="--mq-color: #00e5ff;">
+          <div class="mq-name">Pull CDN</div>
+          <ul>
+            <li>CDN fetches from origin on first request (cache miss)</li>
+            <li>Caches and serves from edge for subsequent requests</li>
+            <li>Zero setup — just point CDN at your origin</li>
+            <li>Good for: general websites, unpredictable traffic</li>
+            <li>Cloudflare, AWS CloudFront default mode</li>
+            <li>First request is slower (origin fetch overhead)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout-cyan">
+        <div class="callout-title">What CDNs Cache</div>
+        <p>CDNs are ideal for <strong style="color:#fff;">static, immutable content</strong>: images, videos, CSS files, JavaScript bundles, fonts, HTML pages. They are NOT suitable for dynamic, user-specific data (like a user's inbox or personalised feed) because that can't be cached globally — every user needs different data.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 3: LOAD BALANCERS      -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="lb">
+    <div class="section-label">Topic 03</div>
+    <div class="section-title">Load Balancers</div>
+
+    <p>A load balancer distributes incoming requests across multiple servers to ensure no single server gets overwhelmed. It is the entry point for all traffic into your server cluster and is what makes horizontal scaling possible.</p>
+
+    <div class="code-block">
+      <div class="code-block-label">Load Balancer in a System</div>
+      <pre>
+                       ┌─────────────────────┐
+  Internet Traffic  →  │    Load Balancer     │  ← Single entry point
+                       └──────┬──────┬────────┘
+                              │      │      │
+                          Server1  Server2  Server3
+                         (healthy) (healthy) (healthy)
+
+  <span class="dim">If Server2 goes down:</span>
+                       └──────┬─────────────┘
+                              │             │
+                          Server1        Server3
+                         <span class="good">(traffic auto-redistributed, no downtime)</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">L4 vs L7 Load Balancing</div>
+      <div class="mq-grid">
+        <div class="mq-card" style="--mq-color: #10b981;">
+          <div class="mq-name">L4 — Transport Layer</div>
+          <ul>
+            <li>Routes based on IP address + TCP/UDP port only</li>
+            <li>Doesn't inspect packet contents — very fast</li>
+            <li>Cannot route based on URL path or HTTP headers</li>
+            <li>Lower overhead — great for raw throughput</li>
+            <li>Example: AWS Network Load Balancer (NLB)</li>
+          </ul>
+        </div>
+        <div class="mq-card" style="--mq-color: #f59e0b;">
+          <div class="mq-name">L7 — Application Layer</div>
+          <ul>
+            <li>Inspects HTTP headers, URL, cookies, body content</li>
+            <li>Can route /api → API servers, /images → image servers</li>
+            <li>Supports SSL termination, A/B testing, auth</li>
+            <li>Slightly more overhead but far more powerful</li>
+            <li>Example: AWS ALB, Nginx, HAProxy</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Load Balancing Algorithms</div>
+      <div class="algo-grid">
+        <div class="algo-card">
+          <div class="algo-name">Round Robin</div>
+          <p>Requests distributed sequentially: 1→S1, 2→S2, 3→S3, 4→S1... Simple, equal distribution. Bad if servers have different capacities.</p>
+        </div>
+        <div class="algo-card">
+          <div class="algo-name">Weighted Round Robin</div>
+          <p>Servers get requests proportional to their weight. S1 (weight 3) gets 3x more than S2 (weight 1). Great for heterogeneous server fleet.</p>
+        </div>
+        <div class="algo-card">
+          <div class="algo-name">Least Connections</div>
+          <p>Next request goes to server with fewest active connections. Best for requests with variable processing time (some fast, some slow).</p>
+        </div>
+        <div class="algo-card">
+          <div class="algo-name">IP Hash</div>
+          <p>hash(client_IP) % servers → same client always hits same server. Creates sticky sessions. Useful when server-side state exists.</p>
+        </div>
+        <div class="algo-card">
+          <div class="algo-name">Consistent Hashing</div>
+          <p>Like IP hash but handles server addition/removal gracefully. Only ~1/n keys remapped when topology changes. Used in distributed caches.</p>
+        </div>
+        <div class="algo-card">
+          <div class="algo-name">Random</div>
+          <p>Pick a random server. Statistically converges to equal distribution at scale. Dead simple and surprisingly effective for large fleets.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Reverse Proxy vs Forward Proxy</div>
+      <div class="code-block">
+        <div class="code-block-label">Proxy Types</div>
+        <pre>
+<span class="keyword">Forward Proxy</span>  — sits in FRONT of clients
+  Client → Forward Proxy → Internet
+  Use: VPNs, corporate firewalls, anonymity
+  The server doesn't know which client made the request
+
+<span class="keyword">Reverse Proxy</span>  — sits in FRONT of servers
+  Client → Reverse Proxy → Server
+  Use: Load balancing, SSL termination, caching, DDoS protection
+  The client doesn't know which backend server responded
+  <span class="dim">Nginx, HAProxy, AWS ALB are all reverse proxies</span></pre>
+      </div>
+    </div>
+
+    <div class="subsection" id="rate-limit">
+      <div class="subsection-title">Rate Limiting Algorithms</div>
+      <p>Rate limiting prevents any single client from overwhelming your system. It's usually implemented at the load balancer or API gateway level. There are four common algorithms:</p>
+
+      <div class="rl-grid">
+        <div class="rl-card">
+          <div class="rl-name">Token Bucket</div>
+          <p>A bucket holds tokens. Each request consumes 1 token. Tokens are added at a fixed rate. If bucket is empty, request is rejected. Allows bursts up to bucket size.</p>
+        </div>
+        <div class="rl-card">
+          <div class="rl-name">Leaky Bucket</div>
+          <p>Requests go into a queue (bucket). Processed at a fixed rate — like water leaking at constant speed. Smooths out bursts. If queue full, requests dropped.</p>
+        </div>
+        <div class="rl-card">
+          <div class="rl-name">Fixed Window Counter</div>
+          <p>Count requests per fixed time window (e.g. 100 req/min). Simple but has edge case: 100 at 0:59 + 100 at 1:01 = 200 in 2 seconds. Window boundary exploit.</p>
+        </div>
+        <div class="rl-card">
+          <div class="rl-name">Sliding Window Log</div>
+          <p>Store timestamp of each request. On each request, count how many timestamps fall within the last window. Most accurate but memory-intensive (stores all timestamps).</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Token Bucket — Visual</div>
+        <pre>
+Bucket capacity: 10 tokens
+Refill rate: 1 token/second
+
+t=0s:  Bucket [<span class="good">●●●●●●●●●●</span>]  10 tokens
+t=0s:  3 requests arrive → consume 3 tokens
+       Bucket [<span class="good">●●●●●●●</span><span class="dim">○○○</span>]   7 tokens  <span class="good">← allowed</span>
+
+t=1s:  1 token added
+       Bucket [<span class="good">●●●●●●●●</span><span class="dim">○○</span>]   8 tokens
+
+t=1s:  9 requests arrive → need 9, have 8
+       Bucket [<span class="dim">○○○○○○○○○○</span>]   0 tokens  
+       8 <span class="good">allowed</span>, 1 <span class="bad">rejected</span></pre>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 4: MESSAGE QUEUES      -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="mq">
+    <div class="section-label">Topic 04</div>
+    <div class="section-title">Message Queues — Kafka vs RabbitMQ</div>
+
+    <p>Message queues decouple producers (who send messages) from consumers (who process them). They enable <strong style="color:#fff;">asynchronous processing</strong> — the producer doesn't wait for the consumer to finish. This is critical for handling spikes, ensuring reliability, and separating concerns.</p>
+
+    <div class="code-block">
+      <div class="code-block-label">Pub/Sub Model — The Core Pattern</div>
+      <pre>
+<span class="label">Publisher</span> → publishes message to a <span class="keyword">Topic</span>
+             ↓
+         [<span class="keyword">Message Queue</span>]   ← stores messages durably on disk
+             ↓
+  ┌──────────┼──────────┐
+  ▼          ▼          ▼
+<span class="label">Consumer1</span>  <span class="label">Consumer2</span>  <span class="label">Consumer3</span>  ← each reads independently
+
+<span class="dim">Example: User uploads a photo on Instagram</span>
+  Publisher → "photo_uploaded" event → Queue
+  Consumer1 → resize to thumbnail
+  Consumer2 → run content moderation AI
+  Consumer3 → notify followers
+  <span class="dim">All three happen in parallel, user doesn't wait for any of them</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Kafka vs RabbitMQ — Deep Comparison</div>
+      <div class="mq-grid">
+        <div class="mq-card" style="--mq-color: #f59e0b;">
+          <div class="mq-name">Apache Kafka</div>
+          <ul>
+            <li>Distributed commit log — messages stored durably on disk</li>
+            <li>Messages are NOT deleted after consumption (retained for days/weeks)</li>
+            <li>Consumers track their own offset — can replay old messages</li>
+            <li>Partitions allow massive parallelism (millions/sec throughput)</li>
+            <li>Consumer groups — multiple consumers share a topic's partitions</li>
+            <li>Best for: event streaming, audit logs, real-time analytics</li>
+            <li>Used by: LinkedIn, Uber, Airbnb, Netflix</li>
+          </ul>
+        </div>
+        <div class="mq-card" style="--mq-color: #ec4899;">
+          <div class="mq-name">RabbitMQ</div>
+          <ul>
+            <li>Traditional message broker with exchanges and queues</li>
+            <li>Messages deleted once consumed and acknowledged</li>
+            <li>Flexible routing: direct, fanout, topic, headers exchanges</li>
+            <li>Built-in dead letter queues for failed messages</li>
+            <li>Lower throughput than Kafka but simpler setup</li>
+            <li>Best for: task queues, job processing, microservice communication</li>
+            <li>Used by: many mid-size applications</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Kafka Architecture — Key Concepts</div>
+        <pre>
+<span class="keyword">Topic</span>: "user-events"
+  ├─ <span class="label">Partition 0:</span>  [msg1] [msg4] [msg7]  ← Consumer Group A reads this
+  ├─ <span class="label">Partition 1:</span>  [msg2] [msg5] [msg8]  ← Consumer Group A reads this
+  └─ <span class="label">Partition 2:</span>  [msg3] [msg6] [msg9]  ← Consumer Group A reads this
+
+<span class="dim">Each consumer in a group gets one or more partitions
+More partitions = more parallelism = higher throughput
+Offset: each consumer remembers where it left off (can replay from offset 0)</span>
+
+<span class="good">At-least-once delivery:</span>  consumer crashes → message reprocessed from last committed offset
+<span class="good">Exactly-once delivery:</span>   Kafka Transactions (v0.11+) — no duplicate processing</pre>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">Dead Letter Queue (DLQ)</div>
+        <p>When a message fails to process (e.g. throws an exception) after N retries, it gets moved to a Dead Letter Queue instead of being lost or endlessly retried. This lets you inspect failed messages, fix the bug, and reprocess them. Essential for production reliability. Both Kafka and RabbitMQ support this pattern.</p>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title">When to Use Message Queues in System Design</div>
+        <p>Use queues when: (1) <strong style="color:#fff;">Decoupling</strong> — sender shouldn't wait for receiver, (2) <strong style="color:#fff;">Traffic spikes</strong> — absorb bursts without dropping requests, (3) <strong style="color:#fff;">Parallel processing</strong> — one event triggers multiple independent workflows, (4) <strong style="color:#fff;">Retry logic</strong> — failed tasks should be retried automatically, (5) <strong style="color:#fff;">Audit trail</strong> — you need a log of all events (use Kafka).</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 5: REAL-TIME COMMS     -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="realtime">
+    <div class="section-label">Topic 05</div>
+    <div class="section-title">Real-Time Communication</div>
+
+    <p>Standard HTTP is request-driven — the client always initiates. For real-time systems (chat, live scores, notifications), you need the <strong style="color:#fff;">server to push data to clients</strong> without the client asking. There are four approaches, each with different trade-offs.</p>
+
+    <div class="rt-grid">
+      <div class="rt-card" style="--rt-color: #ef4444;">
+        <div class="rt-name">Short Polling</div>
+        <p>Client asks "anything new?" every N seconds. Simple but wasteful — most requests return nothing. High server load.</p>
+        <div class="rt-use">Use: Simple dashboards, non-critical updates</div>
+      </div>
+      <div class="rt-card" style="--rt-color: #f59e0b;">
+        <div class="rt-name">Long Polling</div>
+        <p>Client asks, server holds connection open until data is available. When data arrives, server responds and client immediately reconnects. Simulates push.</p>
+        <div class="rt-use">Use: Chat apps (older), notification systems</div>
+      </div>
+      <div class="rt-card" style="--rt-color: #10b981;">
+        <div class="rt-name">WebSockets</div>
+        <p>Full-duplex persistent connection. Both client and server can send messages anytime. Single TCP connection maintained. Low overhead after setup.</p>
+        <div class="rt-use">Use: WhatsApp, live chat, multiplayer games, trading</div>
+      </div>
+      <div class="rt-card" style="--rt-color: #00e5ff;">
+        <div class="rt-name">Server-Sent Events (SSE)</div>
+        <p>One-way persistent stream: server → client only. Client cannot send data back (uses regular HTTP for that). Simpler than WebSockets for push-only needs.</p>
+        <div class="rt-use">Use: Live news feeds, GitHub activity, notifications</div>
+      </div>
+      <div class="rt-card" style="--rt-color: #a78bfa;">
+        <div class="rt-name">WebRTC</div>
+        <p>Peer-to-peer media streaming directly between browsers. No server in the media path. Supports video, audio, and arbitrary data. Uses STUN/TURN servers for NAT traversal.</p>
+        <div class="rt-use">Use: Zoom, Google Meet, video calls, screen share</div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">WebSockets — How They Work</div>
+      <div class="code-block">
+        <div class="code-block-label">WebSocket Lifecycle</div>
+        <pre>
+<span class="label">1. HTTP Upgrade Handshake:</span>
+   Client → GET /chat HTTP/1.1
+            Upgrade: websocket
+            Connection: Upgrade
+   Server → 101 Switching Protocols  <span class="dim">← connection "upgraded"</span>
+
+<span class="label">2. Persistent Connection:</span>
+   Client ──────── "Hello" ──────────► Server  <span class="dim">(client sends anytime)</span>
+   Client ◄──── "Message from Bob" ─── Server  <span class="dim">(server pushes anytime)</span>
+   Client ──────── "Read receipt" ─────► Server
+   <span class="dim">Single TCP connection stays open for entire session</span>
+
+<span class="label">3. Connection closes:</span>
+   Either side sends Close frame → connection terminated
+
+<span class="dim">WhatsApp uses a custom XMPP protocol over WebSockets/TCP
+Each client maintains one persistent connection to an edge server</span></pre>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title">WebRTC vs WebSockets for Video</div>
+        <p><strong style="color:#fff;">WebSockets</strong>: great for signalling (who's calling who, call status) but NOT for media (video/audio bytes). Routing all video through a server is expensive and adds latency.<br><br>
+        <strong style="color:#fff;">WebRTC</strong>: streams video/audio directly peer-to-peer after initial connection. Server is only used for signalling (exchanging IP addresses) and as a TURN relay when P2P isn't possible (firewall/NAT). This is why Zoom can handle millions of calls without routing all video through their servers.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 6: PUSH VS PULL        -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="pushpull">
+    <div class="section-label">Topic 06</div>
+    <div class="section-title">Push vs Pull Architecture</div>
+
+    <p>This is one of the most important trade-offs in system design — particularly for feed-based systems like Twitter, Instagram, and Facebook. The question is: when a user posts something, when do their followers see it?</p>
+
+    <div class="pp-grid">
+      <div class="pp-card" style="--pp-color: #00e5ff;">
+        <div class="pp-title">Push (Fan-out on Write)</div>
+        <p>When Alice posts a tweet, immediately push it to the feeds of all her followers. Their feed is pre-computed and ready.</p>
+        <p><strong style="color:#fff;">Read is instant</strong> — just fetch pre-built feed from cache.</p>
+        <p><strong style="color:#fff;">Write is expensive</strong> — if Alice has 50M followers, that's 50M writes immediately.</p>
+        <div class="pp-examples">Used by: Instagram (for most users), TikTok</div>
+      </div>
+      <div class="pp-card" style="--pp-color: #f59e0b;">
+        <div class="pp-title">Pull (Fan-out on Read)</div>
+        <p>When Bob opens his feed, query all accounts he follows and merge their recent posts on the fly.</p>
+        <p><strong style="color:#fff;">Write is cheap</strong> — just store the post once in Alice's table.</p>
+        <p><strong style="color:#fff;">Read is expensive</strong> — if Bob follows 1000 people, that's 1000 queries merged.</p>
+        <div class="pp-examples">Used by: YouTube (subscriptions), some email clients</div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">The Celebrity Problem — Why Twitter Uses Hybrid</div>
+      <div class="code-block">
+        <div class="code-block-label">Twitter's Hybrid Approach</div>
+        <pre>
+<span class="label">Regular users</span> (fewer than ~100k followers):
+  → Use <span class="keyword">PUSH</span> (fan-out on write)
+  → Tweet stored in all followers' feed caches immediately
+  → Fast reads for everyone
+
+<span class="label">Celebrity accounts</span> (millions of followers — Elon Musk, Cristiano Ronaldo):
+  → Use <span class="keyword">PULL</span> (fan-out on read)
+  → Tweet stored once. NOT pushed to 100M feeds.
+  → When a follower opens the app, celebrity tweets are fetched on-demand
+  → Merged with pre-built feed from regular accounts they follow
+
+<span class="good">Why?</span>  Pushing a single tweet to 100 million feeds simultaneously
+       would require millions of writes in seconds → system would collapse.
+       <span class="dim">This threshold is ~100k–500k followers depending on the platform.</span></pre>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title">Interview Answer Formula</div>
+        <p>When asked to design a social feed, say: <em style="color:#cbd5e1;">"I'll use a hybrid approach — fan-out on write for regular users with the pre-built feed stored in Redis, and fan-out on read for celebrity accounts above a follower threshold (~100k). This balances write amplification against read latency, since celebrity posts are rare but their fan-out cost is enormous."</em></p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="golden-rule-label">Key Takeaway — Phase 03</div>
+    <p>Every HLD component exists to solve one problem:<br>
+    <span style="color:var(--accent1-light);">Cache</span> → speed. &nbsp;
+    <span style="color:var(--accent2);">CDN</span> → proximity. &nbsp;
+    <span style="color:var(--accent3);">Load Balancer</span> → distribution. &nbsp;
+    <span style="color:var(--accent6);">Queue</span> → decoupling.<br>
+    Know which problem you're solving before reaching for a tool.</p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-row">
+    <a class="nav-btn" href="phase-02-databases.html">← Phase 02: Databases</a>
+    <a class="nav-btn" href="phase-04-advanced-hld.html">Phase 04: Advanced HLD →</a>
+  </div>
+
+</div>
+</body>
+</html>

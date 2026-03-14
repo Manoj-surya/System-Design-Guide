@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 05 — Low Level Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --surface2: #1a1a1a;
+    --border: #252525;
+    --accent1: #e879f9;
+    --accent1-d: #a21caf;
+    --accent2: #fb923c;
+    --accent3: #facc15;
+    --accent4: #4ade80;
+    --accent5: #38bdf8;
+    --accent6: #f43f5e;
+    --text: #e5e5e5;
+    --muted: #555;
+    --light: #999;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  /* scanline texture */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.008) 2px,
+      rgba(255,255,255,0.008) 4px
+    );
+    pointer-events:none; z-index:0;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 52px 28px 110px;
+    position: relative; z-index:1;
+  }
+
+  /* ── Header ── */
+  header { margin-bottom:56px; animation: fadeDown 0.7s ease forwards; }
+
+  .breadcrumb {
+    font-size:10px; letter-spacing:3px; color:var(--muted);
+    text-transform:uppercase; margin-bottom:14px;
+  }
+  .breadcrumb span { color:var(--accent1); }
+
+  h1 {
+    font-family:'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    letter-spacing: 4px;
+    line-height: 0.95;
+    background: linear-gradient(135deg, #fff 0%, var(--accent1) 40%, var(--accent2) 80%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:20px;
+  }
+
+  .header-meta { display:flex; gap:8px; flex-wrap:wrap; }
+  .badge {
+    font-size:9px; letter-spacing:2px; padding:4px 10px;
+    border-radius:2px; text-transform:uppercase;
+  }
+  .b-pink   { background:rgba(232,121,249,0.1); border:1px solid rgba(232,121,249,0.35); color:var(--accent1); }
+  .b-orange { background:rgba(251,146,60,0.1);  border:1px solid rgba(251,146,60,0.35);  color:var(--accent2); }
+  .b-yellow { background:rgba(250,204,21,0.1);  border:1px solid rgba(250,204,21,0.35);  color:var(--accent3); }
+  .b-green  { background:rgba(74,222,128,0.1);  border:1px solid rgba(74,222,128,0.35);  color:var(--accent4); }
+  .b-blue   { background:rgba(56,189,248,0.1);  border:1px solid rgba(56,189,248,0.35);  color:var(--accent5); }
+
+  /* ── TOC ── */
+  .toc {
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent1);
+    padding:22px 26px; margin-bottom:60px;
+    animation: fadeUp 0.5s ease 0.1s forwards; opacity:0;
+  }
+  .toc-title { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--accent1); margin-bottom:12px; }
+  .toc-list {
+    list-style:none;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));
+    gap:5px 20px;
+  }
+  .toc-list li a {
+    font-size:11px; color:var(--light); text-decoration:none;
+    display:flex; align-items:center; gap:8px; transition:color 0.2s;
+  }
+  .toc-list li a:hover { color:var(--accent1); }
+  .toc-list li a::before { content:'//'; color:var(--accent1); font-size:10px; opacity:0.6; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom:80px;
+    animation: fadeUp 0.6s ease forwards; opacity:0;
+  }
+  .section:nth-child(1) { animation-delay:0.10s; }
+  .section:nth-child(2) { animation-delay:0.17s; }
+  .section:nth-child(3) { animation-delay:0.24s; }
+  .section:nth-child(4) { animation-delay:0.31s; }
+  .section:nth-child(5) { animation-delay:0.38s; }
+  .section:nth-child(6) { animation-delay:0.45s; }
+  .section:nth-child(7) { animation-delay:0.52s; }
+
+  .section-num {
+    font-family:'Bebas Neue', sans-serif;
+    font-size:4rem; letter-spacing:3px; line-height:1;
+    color:transparent;
+    -webkit-text-stroke:1px rgba(232,121,249,0.25);
+    margin-bottom:-10px; display:block;
+  }
+  .section-title {
+    font-family:'Bebas Neue', sans-serif;
+    font-size:clamp(1.6rem, 3.5vw, 2.4rem);
+    letter-spacing:3px; color:#fff;
+    padding-bottom:12px; border-bottom:1px solid var(--border);
+    margin-bottom:6px;
+  }
+  .subsection { margin-top:38px; }
+  .subsection-title {
+    font-size:0.85rem; font-weight:500; letter-spacing:1px;
+    color:var(--accent1); margin-bottom:12px;
+    display:flex; align-items:center; gap:10px;
+    text-transform:uppercase;
+  }
+  .subsection-title::before {
+    content:''; width:28px; height:1px;
+    background:var(--accent1); flex-shrink:0;
+  }
+
+  p { font-size:12.5px; color:var(--light); margin-bottom:14px; line-height:1.9; }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background:#0a0a0a; border:1px solid var(--border);
+    border-left:3px solid var(--accent1);
+    padding:18px 20px; margin:14px 0; overflow-x:auto;
+  }
+  .code-label { font-size:8px; letter-spacing:2.5px; text-transform:uppercase; color:var(--accent1); margin-bottom:8px; opacity:0.75; }
+  pre {
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px;
+    color:#e9d5ff; line-height:1.8; white-space:pre;
+  }
+  pre .dim    { color:#333; }
+  pre .kw     { color:var(--accent5); }
+  pre .str    { color:var(--accent4); }
+  pre .lbl    { color:var(--accent3); }
+  pre .good   { color:var(--accent4); }
+  pre .bad    { color:var(--accent6); }
+  pre .org    { color:var(--accent2); }
+  pre .pink   { color:var(--accent1); }
+  pre .white  { color:#fff; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x:auto; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; font-size:11.5px; }
+  thead tr { background:#0a0a0a; border-bottom:2px solid var(--accent1); }
+  thead th { padding:9px 14px; text-align:left; font-size:9px; letter-spacing:2px; color:#fff; text-transform:uppercase; white-space:nowrap; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+  tbody tr:hover { background:var(--surface2); }
+  tbody td { padding:9px 14px; color:var(--light); vertical-align:top; line-height:1.6; }
+  tbody td:first-child { color:var(--accent1); font-weight:500; white-space:nowrap; }
+
+  /* ── Callouts ── */
+  .callout { padding:16px 20px; margin:16px 0; font-size:12px; line-height:1.8; }
+  .co-pink   { background:rgba(232,121,249,0.05); border:1px solid rgba(232,121,249,0.2);  border-left:3px solid var(--accent1); }
+  .co-orange { background:rgba(251,146,60,0.05);  border:1px solid rgba(251,146,60,0.2);   border-left:3px solid var(--accent2); }
+  .co-green  { background:rgba(74,222,128,0.05);  border:1px solid rgba(74,222,128,0.2);   border-left:3px solid var(--accent4); }
+  .co-blue   { background:rgba(56,189,248,0.05);  border:1px solid rgba(56,189,248,0.2);   border-left:3px solid var(--accent5); }
+  .co-yellow { background:rgba(250,204,21,0.05);  border:1px solid rgba(250,204,21,0.2);   border-left:3px solid var(--accent3); }
+  .co-red    { background:rgba(244,63,94,0.05);   border:1px solid rgba(244,63,94,0.2);    border-left:3px solid var(--accent6); }
+  .callout-title { font-size:9px; font-weight:700; letter-spacing:3px; text-transform:uppercase; margin-bottom:7px; }
+  .co-pink   .callout-title { color:var(--accent1); }
+  .co-orange .callout-title { color:var(--accent2); }
+  .co-green  .callout-title { color:var(--accent4); }
+  .co-blue   .callout-title { color:var(--accent5); }
+  .co-yellow .callout-title { color:var(--accent3); }
+  .co-red    .callout-title { color:var(--accent6); }
+  .callout p { color:var(--light); margin:0; font-size:12px; }
+
+  /* ── OOP pillars ── */
+  .pillars {
+    display:grid; grid-template-columns:repeat(4, 1fr);
+    gap:10px; margin:16px 0;
+  }
+  .pillar {
+    background:var(--surface); border:1px solid var(--border);
+    padding:18px 16px; text-align:center;
+    border-top:3px solid var(--pc);
+    transition:transform 0.2s;
+  }
+  .pillar:hover { transform:translateY(-3px); }
+  .pillar-letter {
+    font-family:'Bebas Neue', sans-serif; font-size:2.8rem;
+    letter-spacing:2px; color:var(--pc); line-height:1; margin-bottom:6px;
+  }
+  .pillar-name { font-size:0.8rem; font-weight:500; color:#fff; margin-bottom:8px; }
+  .pillar p { font-size:10.5px; color:var(--muted); margin:0; line-height:1.6; }
+
+  /* ── SOLID cards ── */
+  .solid-list { display:flex; flex-direction:column; gap:10px; margin:16px 0; }
+  .solid-item {
+    background:var(--surface); border:1px solid var(--border);
+    padding:16px 20px;
+    display:grid; grid-template-columns:48px 160px 1fr;
+    gap:16px; align-items:start;
+    transition:background 0.2s;
+  }
+  .solid-item:hover { background:var(--surface2); }
+  .solid-letter {
+    font-family:'Bebas Neue', sans-serif; font-size:2.2rem;
+    letter-spacing:2px; line-height:1; color:var(--accent1);
+  }
+  .solid-name { font-size:0.82rem; font-weight:500; color:#fff; padding-top:4px; line-height:1.4; }
+  .solid-desc { font-size:11.5px; color:var(--light); line-height:1.7; padding-top:2px; }
+  .solid-bad  { font-size:11px; color:var(--accent6); margin-top:4px; }
+  .solid-good { font-size:11px; color:var(--accent4); margin-top:2px; }
+
+  /* ── Pattern category headers ── */
+  .pattern-cat {
+    display:flex; align-items:center; gap:12px;
+    margin:32px 0 14px;
+  }
+  .pcat-label {
+    font-family:'Bebas Neue', sans-serif; font-size:1.1rem;
+    letter-spacing:3px; color:var(--pc2, var(--accent2));
+    white-space:nowrap;
+  }
+  .pcat-line { flex:1; height:1px; background:var(--border); }
+  .pcat-count {
+    font-size:9px; letter-spacing:2px; color:var(--muted);
+    white-space:nowrap;
+  }
+
+  /* ── Design pattern cards ── */
+  .pattern-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr));
+    gap:10px;
+  }
+  .pat {
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--pc3, var(--accent2));
+    padding:16px 18px; transition:transform 0.2s, box-shadow 0.2s;
+  }
+  .pat:hover { transform:translateX(3px); box-shadow:-3px 0 16px rgba(232,121,249,0.08); }
+  .pat-name { font-size:0.88rem; font-weight:500; color:#fff; margin-bottom:6px; }
+  .pat-intent { font-size:11px; color:var(--light); line-height:1.65; margin-bottom:8px; }
+  .pat-use { font-size:10px; color:var(--pc3, var(--accent2)); opacity:0.85; }
+  .pat-code {
+    background:#0a0a0a; border:1px solid var(--border);
+    padding:10px 12px; margin-top:8px; font-size:10.5px;
+    font-family:'IBM Plex Mono', monospace;
+    color:#d8b4fe; line-height:1.6; white-space:pre-wrap;
+  }
+
+  /* ── Concurrency cards ── */
+  .conc-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:10px; margin:16px 0;
+  }
+  .conc-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:2px solid var(--accent5);
+    padding:14px 16px;
+  }
+  .conc-name { font-size:0.82rem; font-weight:500; color:var(--accent5); margin-bottom:6px; }
+  .conc-card p { font-size:11px; color:var(--muted); margin:0; line-height:1.6; }
+
+  /* ── Clean code principles ── */
+  .clean-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+    gap:10px; margin:16px 0;
+  }
+  .clean-card {
+    background:var(--surface); border:1px solid var(--border);
+    padding:14px 16px; border-bottom:2px solid var(--accent4);
+  }
+  .clean-name { font-size:0.82rem; font-weight:500; color:var(--accent4); margin-bottom:6px; }
+  .clean-card p { font-size:11px; color:var(--muted); margin:0; line-height:1.6; }
+
+  /* ── API design cards ── */
+  .api-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:10px; margin:16px 0;
+  }
+  .api-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent3);
+    padding:14px 16px;
+  }
+  .api-topic { font-size:0.82rem; font-weight:500; color:var(--accent3); margin-bottom:6px; }
+  .api-card p { font-size:11px; color:var(--muted); margin:0; line-height:1.6; }
+
+  /* ── Golden rule ── */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(232,121,249,0.07), rgba(251,146,60,0.05));
+    border:1px solid rgba(232,121,249,0.2);
+    padding:32px 36px; margin-top:64px; text-align:center;
+    animation: fadeUp 0.6s ease 0.6s forwards; opacity:0;
+  }
+  .gr-label { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--accent1); margin-bottom:12px; }
+  .golden-rule p {
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.6rem; letter-spacing:2px; color:#fff; line-height:1.5; margin:0;
+  }
+
+  .nav-row { display:flex; justify-content:space-between; margin-top:48px; gap:12px; flex-wrap:wrap; }
+  .nav-btn {
+    background:var(--surface); border:1px solid var(--border);
+    padding:12px 20px; font-family:'IBM Plex Mono', monospace; font-size:11px;
+    color:var(--accent1); text-decoration:none;
+    display:flex; align-items:center; gap:8px; transition:background 0.2s, border-color 0.2s;
+  }
+  .nav-btn:hover { background:rgba(232,121,249,0.06); border-color:var(--accent1); }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); }
+
+  @media(max-width:800px) {
+    .pillars { grid-template-columns:1fr 1fr; }
+    .solid-item { grid-template-columns:40px 1fr; }
+    .solid-desc { grid-column:1/-1; }
+    .pattern-grid { grid-template-columns:1fr; }
+  }
+  @media(max-width:480px) {
+    .pillars { grid-template-columns:1fr; }
+    h1 { font-size:3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 05</span></div>
+    <h1>LOW LEVEL<br>DESIGN</h1>
+    <div class="header-meta">
+      <span class="badge b-pink">Week 10 – 12</span>
+      <span class="badge b-orange">OOP · SOLID</span>
+      <span class="badge b-yellow">18 Design Patterns</span>
+      <span class="badge b-green">Concurrency</span>
+      <span class="badge b-blue">API Design · Clean Code</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#oop">4 Pillars of OOP</a></li>
+      <li><a href="#solid">SOLID Principles</a></li>
+      <li><a href="#creational">Creational Patterns (5)</a></li>
+      <li><a href="#structural">Structural Patterns (6)</a></li>
+      <li><a href="#behavioural">Behavioural Patterns (7)</a></li>
+      <li><a href="#concurrency">Concurrency & Thread Safety</a></li>
+      <li><a href="#api">API Design Principles</a></li>
+      <li><a href="#clean">Clean Code Principles</a></li>
+    </ul>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 1: OOP PILLARS         -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="oop">
+    <span class="section-num">01</span>
+    <div class="section-title">Four Pillars of OOP</div>
+
+    <p>Object-Oriented Programming organises code around <strong style="color:#fff;">objects that bundle data and behaviour</strong>. These four pillars are the foundation of every LLD interview — you'll be expected to apply them, not just define them.</p>
+
+    <div class="pillars">
+      <div class="pillar" style="--pc:#e879f9;">
+        <div class="pillar-letter">E</div>
+        <div class="pillar-name">Encapsulation</div>
+        <p>Hide internal state. Expose only what's needed via public methods. Prevents external code from directly modifying internal data.</p>
+      </div>
+      <div class="pillar" style="--pc:#fb923c;">
+        <div class="pillar-letter">A</div>
+        <div class="pillar-name">Abstraction</div>
+        <p>Show only what something does, hide how it does it. You use a TV remote without knowing its circuits.</p>
+      </div>
+      <div class="pillar" style="--pc:#facc15;">
+        <div class="pillar-letter">I</div>
+        <div class="pillar-name">Inheritance</div>
+        <p>Child classes inherit behaviour from parent. Enables code reuse. Dog extends Animal — gets eat() and sleep() for free.</p>
+      </div>
+      <div class="pillar" style="--pc:#4ade80;">
+        <div class="pillar-letter">P</div>
+        <div class="pillar-name">Polymorphism</div>
+        <p>Same interface, different behaviour. Call draw() on Circle, Square, Triangle — each behaves differently. One call, many forms.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">All 4 Pillars in One Example</div>
+      <pre>
+<span class="kw">class</span> <span class="white">BankAccount</span> {
+  <span class="pink">private</span> balance: number   <span class="dim">// ENCAPSULATION: hidden, not directly accessible</span>
+
+  <span class="kw">constructor</span>(initial: number) { this.balance = initial }
+
+  <span class="kw">public</span> <span class="lbl">deposit</span>(amount: number): void {  <span class="dim">// public interface only</span>
+    <span class="kw">if</span> (amount > 0) this.balance += amount  <span class="dim">// validation hidden inside</span>
+  }
+
+  <span class="kw">public</span> <span class="lbl">getBalance</span>(): number { return this.balance }  <span class="dim">// controlled read</span>
+}
+
+<span class="kw">class</span> <span class="white">SavingsAccount</span> <span class="kw">extends</span> BankAccount {  <span class="dim">// INHERITANCE: reuses deposit/getBalance</span>
+  <span class="kw">private</span> interestRate = 0.05
+
+  <span class="lbl">applyInterest</span>() { this.deposit(this.getBalance() * this.interestRate) }
+}
+
+<span class="dim">// ABSTRACTION: caller doesn't know HOW deposit works internally
+// POLYMORPHISM: deposit() behaves differently in SavingsAccount if overridden</span></pre>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 2: SOLID               -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="solid">
+    <span class="section-num">02</span>
+    <div class="section-title">SOLID Principles</div>
+
+    <p>SOLID is an acronym for five design principles that make software more <strong style="color:#fff;">maintainable, extensible, and testable</strong>. They are the single most important set of guidelines for LLD interviews.</p>
+
+    <div class="solid-list">
+
+      <div class="solid-item">
+        <div class="solid-letter">S</div>
+        <div class="solid-name">Single Responsibility Principle</div>
+        <div>
+          <div class="solid-desc">A class should have only ONE reason to change. One class = one job. If a class handles user auth AND sends emails AND writes to DB, that's three responsibilities.</div>
+          <div class="solid-bad">✗ class UserManager { login() + sendEmail() + saveToDb() }</div>
+          <div class="solid-good">✓ AuthService + EmailService + UserRepository — each one thing</div>
+        </div>
+      </div>
+
+      <div class="solid-item">
+        <div class="solid-letter">O</div>
+        <div class="solid-name">Open/Closed Principle</div>
+        <div>
+          <div class="solid-desc">Open for extension, closed for modification. Add new behaviour by adding new code, not changing existing code. Prevents breaking what already works.</div>
+          <div class="solid-bad">✗ Adding new payment type requires editing PaymentProcessor's if-else chain</div>
+          <div class="solid-good">✓ PaymentProcessor uses interface PaymentMethod — add CryptoPayment without touching existing code</div>
+        </div>
+      </div>
+
+      <div class="solid-item">
+        <div class="solid-letter">L</div>
+        <div class="solid-name">Liskov Substitution Principle</div>
+        <div>
+          <div class="solid-desc">Subtypes must be substitutable for their base types without breaking the program. If S extends T, anywhere T is used, S must work correctly there too.</div>
+          <div class="solid-bad">✗ class Penguin extends Bird { fly() { throw Error("can't fly") } } — breaks callers of Bird</div>
+          <div class="solid-good">✓ Separate FlyingBird and NonFlyingBird interfaces — Penguin only implements what it can do</div>
+        </div>
+      </div>
+
+      <div class="solid-item">
+        <div class="solid-letter">I</div>
+        <div class="solid-name">Interface Segregation Principle</div>
+        <div>
+          <div class="solid-desc">Clients shouldn't depend on interfaces they don't use. Many small, specific interfaces are better than one fat interface that forces implementing unused methods.</div>
+          <div class="solid-bad">✗ interface Worker { work() + eat() + sleep() } — RobotWorker forced to implement eat()/sleep()</div>
+          <div class="solid-good">✓ interface Workable { work() }  +  interface Livable { eat(); sleep() }</div>
+        </div>
+      </div>
+
+      <div class="solid-item">
+        <div class="solid-letter">D</div>
+        <div class="solid-name">Dependency Inversion Principle</div>
+        <div>
+          <div class="solid-desc">High-level modules shouldn't depend on low-level modules. Both should depend on abstractions. Depend on interfaces, not concrete implementations.</div>
+          <div class="solid-bad">✗ class OrderService { db = new MySQLDatabase() } — tightly coupled to MySQL</div>
+          <div class="solid-good">✓ class OrderService { db: IDatabase } — inject any DB (MySQL, Postgres, Mock) from outside</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="callout co-pink">
+      <div class="callout-title">Why SOLID Matters in Interviews</div>
+      <p>When you write LLD code in an interview and the interviewer asks "how would you add a new payment method?" or "how would you make this testable?" — SOLID is your answer. Every SOLID principle directly enables either extensibility (O, D), testability (D, S), or correctness (L, I).</p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 3: CREATIONAL PATTERNS  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="creational">
+    <span class="section-num">03</span>
+    <div class="section-title">Design Patterns</div>
+
+    <p>Design patterns are <strong style="color:#fff;">proven, reusable solutions to commonly recurring problems</strong> in software design. There are 23 classic Gang of Four patterns split into three categories. Know all 18 listed below — their intent, when to use, and a concrete example.</p>
+
+    <div class="pattern-cat">
+      <div class="pcat-label" style="--pc2:#fb923c;">CREATIONAL</div>
+      <div class="pcat-line"></div>
+      <div class="pcat-count">5 PATTERNS — HOW OBJECTS ARE CREATED</div>
+    </div>
+
+    <div class="pattern-grid">
+
+      <div class="pat" style="--pc3:#fb923c;">
+        <div class="pat-name">Singleton</div>
+        <div class="pat-intent">Ensures a class has only ONE instance and provides a global access point to it.</div>
+        <div class="pat-use">→ Database connection pool, Logger, Config manager, Thread pool</div>
+        <div class="pat-code">class DBPool {
+  private static instance: DBPool
+  private constructor() {}  // blocks new DBPool()
+  static getInstance() {
+    if (!DBPool.instance)
+      DBPool.instance = new DBPool()
+    return DBPool.instance
+  }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#fb923c;">
+        <div class="pat-name">Factory Method</div>
+        <div class="pat-intent">Defines an interface for creating objects, but lets subclasses decide which class to instantiate. Delegates object creation to subclasses.</div>
+        <div class="pat-use">→ UI components (Button → WindowsButton / MacButton), parsers, loggers</div>
+        <div class="pat-code">abstract class Notification {
+  abstract createSender(): ISender  // factory method
+  send(msg) { this.createSender().send(msg) }
+}
+class EmailNotification extends Notification {
+  createSender() { return new EmailSender() }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#fb923c;">
+        <div class="pat-name">Abstract Factory</div>
+        <div class="pat-intent">Creates families of related objects without specifying their concrete classes. A factory of factories — ensures objects from the same family are used together.</div>
+        <div class="pat-use">→ Cross-platform UI kits (Windows/Mac/Linux), database drivers, theme systems</div>
+        <div class="pat-code">interface GUIFactory {
+  createButton(): Button
+  createCheckbox(): Checkbox
+}
+class MacFactory implements GUIFactory {
+  createButton() { return new MacButton() }
+  createCheckbox() { return new MacCheckbox() }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#fb923c;">
+        <div class="pat-name">Builder</div>
+        <div class="pat-intent">Constructs complex objects step-by-step. Separates construction from representation. Useful when an object needs many optional configuration parameters.</div>
+        <div class="pat-use">→ SQL query builder, HTTP request builder, complex config objects, meal ordering</div>
+        <div class="pat-code">const query = new QueryBuilder()
+  .select("id", "name")
+  .from("users")
+  .where("age > 18")
+  .orderBy("name")
+  .limit(10)
+  .build()
+// No telescoping constructor with 8 parameters</div>
+      </div>
+
+      <div class="pat" style="--pc3:#fb923c;">
+        <div class="pat-name">Prototype</div>
+        <div class="pat-intent">Creates new objects by copying (cloning) an existing object. Avoids costly re-initialisation when a similar object already exists.</div>
+        <div class="pat-use">→ Game objects (clone enemy template), document templates, object caching</div>
+        <div class="pat-code">class Monster {
+  constructor(public hp, public attack, public name) {}
+  clone() {
+    return new Monster(this.hp, this.attack, this.name)
+  }
+}
+const goblinTemplate = new Monster(100, 15, "Goblin")
+const goblin1 = goblinTemplate.clone()  // fast!</div>
+      </div>
+
+    </div>
+
+
+    <!-- STRUCTURAL -->
+    <div class="pattern-cat" style="margin-top:40px;">
+      <div class="pcat-label" style="--pc2:#38bdf8;">STRUCTURAL</div>
+      <div class="pcat-line"></div>
+      <div class="pcat-count">6 PATTERNS — HOW CLASSES ARE COMPOSED</div>
+    </div>
+
+    <div class="pattern-grid" id="structural">
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Adapter</div>
+        <div class="pat-intent">Converts the interface of one class into another interface that clients expect. Makes incompatible interfaces work together — like a power socket adapter.</div>
+        <div class="pat-use">→ Integrating legacy code, third-party libraries, different API versions</div>
+        <div class="pat-code">// Old logger: log(message: string)
+// New system expects: write(level, msg)
+class LoggerAdapter implements INewLogger {
+  constructor(private old: OldLogger) {}
+  write(level, msg) { this.old.log(`[${level}] ${msg}`) }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Decorator</div>
+        <div class="pat-intent">Adds new behaviour to an object dynamically by wrapping it. Extends functionality without subclassing. Decorators can be stacked.</div>
+        <div class="pat-use">→ Java I/O streams, middleware pipelines, auth wrappers, logging wrappers</div>
+        <div class="pat-code">class LoggingCoffee implements Coffee {
+  constructor(private base: Coffee) {}
+  cost() { return this.base.cost() + 0.5 }
+  description() { return this.base.description() + " + log" }
+}
+// Stack: new Milk(new Sugar(new LoggingCoffee(baseCoffee)))</div>
+      </div>
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Facade</div>
+        <div class="pat-intent">Provides a simplified interface to a complex subsystem. Hides internal complexity behind one easy-to-use class.</div>
+        <div class="pat-use">→ Home theatre systems, compiler front-end, payment SDK, hotel booking</div>
+        <div class="pat-code">// Without Facade: caller must orchestrate 5 steps
+class HomeTheatreFacade {
+  watchMovie(movie: string) {
+    this.dvd.on(); this.projector.on()
+    this.amplifier.on(); this.dvd.load(movie)
+    this.projector.setInput("dvd"); this.dvd.play()
+  }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Proxy</div>
+        <div class="pat-intent">Provides a surrogate/placeholder for another object to control access to it. Can add lazy loading, access control, caching, logging before delegating to real object.</div>
+        <div class="pat-use">→ Lazy loading of heavy objects, API rate limiting, caching proxy, auth guard</div>
+        <div class="pat-code">class ImageProxy implements Image {
+  private realImage: RealImage | null = null
+  display() {
+    if (!this.realImage) {
+      this.realImage = new RealImage(this.url)  // lazy load
+    }
+    this.realImage.display()
+  }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Composite</div>
+        <div class="pat-intent">Composes objects into tree structures to represent part-whole hierarchies. Treats individual objects and compositions of objects uniformly.</div>
+        <div class="pat-use">→ File system (files + folders), UI component trees, org charts, DOM</div>
+        <div class="pat-code">interface FileSystem { getSize(): number }
+
+class File implements FileSystem {
+  getSize() { return this.size }
+}
+class Folder implements FileSystem {
+  children: FileSystem[] = []
+  getSize() {
+    return this.children.reduce((s, c) => s + c.getSize(), 0)
+  }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#38bdf8;">
+        <div class="pat-name">Bridge</div>
+        <div class="pat-intent">Decouples an abstraction from its implementation so both can vary independently. Avoids a permanent binding between abstraction and implementation.</div>
+        <div class="pat-use">→ UI rendering engines, device drivers, cross-platform APIs</div>
+        <div class="pat-code">// Without Bridge: RemoteWindowsTV, RemoteLinuxTV,
+//   SmartRemoteWindowsTV... exponential classes
+class Remote {
+  constructor(private tv: TV) {}  // Bridge: inject implementation
+  togglePower() { this.tv.on() }
+}
+// Now Remote and TV vary independently</div>
+      </div>
+
+    </div>
+
+
+    <!-- BEHAVIOURAL -->
+    <div class="pattern-cat" style="margin-top:40px;">
+      <div class="pcat-label" style="--pc2:#4ade80;">BEHAVIOURAL</div>
+      <div class="pcat-line"></div>
+      <div class="pcat-count">7 PATTERNS — HOW OBJECTS COMMUNICATE</div>
+    </div>
+
+    <div class="pattern-grid" id="behavioural">
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Observer</div>
+        <div class="pat-intent">Defines a one-to-many dependency. When one object (subject) changes state, all its dependents (observers) are notified and updated automatically.</div>
+        <div class="pat-use">→ Event systems, UI frameworks (React state), notifications, stock price alerts</div>
+        <div class="pat-code">class EventEmitter {
+  private listeners: Map&lt;string, Function[]&gt; = new Map()
+  on(event, fn) { this.listeners.get(event)?.push(fn) }
+  emit(event, data) {
+    this.listeners.get(event)?.forEach(fn => fn(data))
+  }
+}
+// WhatsApp: MessageSubject notifies ReadReceiptObserver, NotificationObserver</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Strategy</div>
+        <div class="pat-intent">Defines a family of algorithms, encapsulates each one, and makes them interchangeable. Lets the algorithm vary independently from clients that use it.</div>
+        <div class="pat-use">→ Sorting algorithms, payment methods, compression algorithms, route planning</div>
+        <div class="pat-code">interface SortStrategy { sort(data: number[]): number[] }
+
+class QuickSort implements SortStrategy { sort(d) { /* ... */ } }
+class MergeSort implements SortStrategy { sort(d) { /* ... */ } }
+
+class Sorter {
+  constructor(private strategy: SortStrategy) {}
+  sort(data) { return this.strategy.sort(data) }
+}
+// Switch strategy at runtime based on data size</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Command</div>
+        <div class="pat-intent">Encapsulates a request as an object. Allows parameterising clients with different requests, queuing operations, logging, and supporting undo/redo.</div>
+        <div class="pat-use">→ Undo/redo, macro recording, task queues, transaction logs, GUI buttons</div>
+        <div class="pat-code">interface Command { execute(): void; undo(): void }
+
+class MoveCommand implements Command {
+  constructor(private piece, private from, private to) {}
+  execute() { this.piece.moveTo(this.to) }
+  undo()    { this.piece.moveTo(this.from) }
+}
+// Chess game: push commands to history stack, pop to undo</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">State</div>
+        <div class="pat-intent">Allows an object to alter its behaviour when its internal state changes. The object will appear to change its class. Replaces large if-else / switch chains.</div>
+        <div class="pat-use">→ Vending machine, ATM states, order lifecycle (pending→paid→shipped), traffic lights</div>
+        <div class="pat-code">// Order state machine
+interface OrderState { processPayment(): void; ship(): void }
+
+class PendingState implements OrderState {
+  processPayment() { order.setState(new PaidState()) }
+  ship() { throw new Error("Pay first!") }
+}
+class PaidState implements OrderState {
+  processPayment() { throw new Error("Already paid") }
+  ship() { order.setState(new ShippedState()) }
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Template Method</div>
+        <div class="pat-intent">Defines the skeleton of an algorithm in a base class but lets subclasses override specific steps without changing the algorithm's overall structure.</div>
+        <div class="pat-use">→ Data processing pipelines, game turn sequences, report generators, HTTP handlers</div>
+        <div class="pat-code">abstract class DataMigration {
+  // Template method — fixed order
+  run() {
+    this.connect()
+    const data = this.extract()
+    const transformed = this.transform(data)
+    this.load(transformed)
+    this.disconnect()
+  }
+  abstract extract(): any[]    // subclasses override
+  abstract transform(d): any[] // subclasses override
+}</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Iterator</div>
+        <div class="pat-intent">Provides a way to sequentially access elements of a collection without exposing its underlying representation (array, tree, graph, etc.).</div>
+        <div class="pat-use">→ Collection traversal, database result sets, file system walking, pagination cursors</div>
+        <div class="pat-code">class NumberRange {
+  constructor(private start, private end) {}
+  [Symbol.iterator]() {
+    let current = this.start
+    return {
+      next: () => current <= this.end
+        ? { value: current++, done: false }
+        : { done: true }
+    }
+  }
+}
+for (const n of new NumberRange(1, 5)) { console.log(n) }</div>
+      </div>
+
+      <div class="pat" style="--pc3:#4ade80;">
+        <div class="pat-name">Chain of Responsibility</div>
+        <div class="pat-intent">Passes a request along a chain of handlers. Each handler decides either to process the request or pass it to the next. Decouples sender from receivers.</div>
+        <div class="pat-use">→ Middleware pipelines (Express.js), support ticket escalation, auth/rate-limit/logging chains</div>
+        <div class="pat-code">abstract class Handler {
+  protected next: Handler | null = null
+  setNext(h: Handler) { this.next = h; return h }
+  handle(req: Request) { this.next?.handle(req) }
+}
+class AuthHandler extends Handler {
+  handle(req) {
+    if (!req.token) return respond(401)
+    super.handle(req)  // pass to next handler
+  }
+}</div>
+      </div>
+
+    </div>
+
+    <div class="callout co-orange">
+      <div class="callout-title">Interview Strategy for Design Patterns</div>
+      <p>Don't memorise patterns in isolation. Learn to <strong style="color:#fff;">spot which problem calls for which pattern</strong>: need one instance? Singleton. Need to swap algorithms? Strategy. Need notifications? Observer. Need to add features without changing existing code? Decorator or Visitor. Interviewers test recognition and application, not recitation.</p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 4: CONCURRENCY         -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="concurrency">
+    <span class="section-num">04</span>
+    <div class="section-title">Concurrency &amp; Thread Safety</div>
+
+    <p>When multiple threads access shared data simultaneously, things go wrong in subtle, hard-to-reproduce ways. Understanding concurrency is essential for designing correct multi-threaded systems.</p>
+
+    <div class="code-block">
+      <div class="code-label">Race Condition — The Classic Problem</div>
+      <pre>
+<span class="dim">// balance = 1000. Two threads simultaneously:</span>
+<span class="lbl">Thread A:</span>  read balance (1000)
+<span class="lbl">Thread B:</span>  read balance (1000)
+<span class="lbl">Thread A:</span>  balance = 1000 - 200 = 800  → write 800
+<span class="lbl">Thread B:</span>  balance = 1000 - 300 = 700  → write 700  <span class="bad">← overwrites A!</span>
+
+<span class="bad">Result: 700. Expected: 500. ₹200 created from thin air.</span>
+
+<span class="good">Fix: Lock the balance before reading, unlock after writing</span>
+<span class="lbl">Thread A:</span>  LOCK → read(1000) → write(800) → UNLOCK
+<span class="lbl">Thread B:</span>  waits... LOCK → read(800) → write(500) → UNLOCK  <span class="good">✓</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Core Synchronisation Primitives</div>
+      <div class="conc-grid">
+        <div class="conc-card">
+          <div class="conc-name">Mutex (Lock)</div>
+          <p>Mutual exclusion. Only one thread can hold the lock at a time. Others block until it's released. Use for protecting shared mutable state.</p>
+        </div>
+        <div class="conc-card">
+          <div class="conc-name">Semaphore</div>
+          <p>Like a mutex but with a count. Allows N threads simultaneously. A semaphore(3) lets 3 threads access a resource pool concurrently.</p>
+        </div>
+        <div class="conc-card">
+          <div class="conc-name">Monitor</div>
+          <p>Higher-level lock that bundles a mutex + condition variables. Java's synchronized keyword is a monitor. Enables wait/notify patterns.</p>
+        </div>
+        <div class="conc-card">
+          <div class="conc-name">Atomic Operations</div>
+          <p>CPU-level instructions that execute as one indivisible operation. AtomicInteger, CompareAndSwap. Lock-free concurrency for simple counters.</p>
+        </div>
+        <div class="conc-card">
+          <div class="conc-name">Deadlock</div>
+          <p>Thread A holds Lock 1, waits for Lock 2. Thread B holds Lock 2, waits for Lock 1. Neither can proceed — system frozen. Solution: always acquire locks in same order.</p>
+        </div>
+        <div class="conc-card">
+          <div class="conc-name">Thread Pool</div>
+          <p>Pre-create N threads and reuse them for tasks. Avoids cost of creating/destroying threads per task. ExecutorService in Java, Worker threads in Node.js.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Producer-Consumer Pattern</div>
+      <div class="code-block">
+        <div class="code-label">Producer-Consumer with Bounded Buffer</div>
+        <pre>
+<span class="dim">// Classic concurrent pattern: one thread produces, another consumes</span>
+<span class="dim">// Shared: a bounded queue (max size N)</span>
+
+<span class="kw">class</span> BoundedQueue {
+  private queue: Task[] = []
+  private maxSize = 10
+
+  <span class="lbl">produce</span>(task: Task) {
+    <span class="kw">synchronized</span>(this) {
+      <span class="kw">while</span> (queue.length === maxSize) wait()  <span class="dim">// queue full — sleep</span>
+      queue.push(task)
+      notifyAll()  <span class="dim">// wake consumers</span>
+    }
+  }
+
+  <span class="lbl">consume</span>(): Task {
+    <span class="kw">synchronized</span>(this) {
+      <span class="kw">while</span> (queue.length === 0) wait()  <span class="dim">// queue empty — sleep</span>
+      const task = queue.shift()!
+      notifyAll()  <span class="dim">// wake producers</span>
+      return task
+    }
+  }
+}
+<span class="dim">// This is exactly how message queues (Kafka/RabbitMQ) work under the hood</span></pre>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 5: API DESIGN          -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="api">
+    <span class="section-num">05</span>
+    <div class="section-title">API Design Principles</div>
+
+    <p>In LLD interviews you'll often be asked to design the APIs for a system. A well-designed API is intuitive, consistent, and extensible. These are the principles that matter.</p>
+
+    <div class="api-grid">
+      <div class="api-card">
+        <div class="api-topic">REST Conventions</div>
+        <p>Nouns not verbs in URLs. GET /users not GET /getUsers. HTTP methods carry the verb: GET=read, POST=create, PUT=replace, PATCH=partial update, DELETE=remove.</p>
+      </div>
+      <div class="api-card">
+        <div class="api-topic">Idempotency</div>
+        <p>GET, PUT, DELETE are idempotent — calling them N times = same result as once. POST is not. Critical for safe retries — PUT /orders/123 can be retried without creating duplicates.</p>
+      </div>
+      <div class="api-card">
+        <div class="api-topic">Versioning</div>
+        <p>Never break existing clients. Version your API: /v1/users, /v2/users. Or use Accept-Version header. Keep v1 alive until all clients migrate. Breaking changes go in new version.</p>
+      </div>
+      <div class="api-card">
+        <div class="api-topic">Pagination</div>
+        <p>Never return all records. Offset pagination: ?page=2&limit=20. Cursor pagination: ?cursor=xyz&limit=20. Cursor is more efficient for large datasets (no count query needed).</p>
+      </div>
+      <div class="api-card">
+        <div class="api-topic">Error Handling</div>
+        <p>Use correct status codes: 400 (bad input), 401 (not authenticated), 403 (not authorised), 404 (not found), 409 (conflict), 429 (rate limited), 500 (server error). Include error detail in body.</p>
+      </div>
+      <div class="api-card">
+        <div class="api-topic">Request/Response Models</div>
+        <p>Never expose internal DB models directly. Create dedicated DTOs (Data Transfer Objects) for input and output. Separate concerns between persistence and transport layers.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Good API Design — Example</div>
+      <pre>
+<span class="dim">// Bad API</span>
+<span class="bad">POST /getUser?userId=42
+POST /createNewUser
+POST /deleteUser?id=42&confirm=true</span>
+
+<span class="dim">// Good RESTful API</span>
+<span class="good">GET    /users/42          → return user 42</span>
+<span class="good">POST   /users             → create user (body has user data)</span>
+<span class="good">PATCH  /users/42          → partial update user 42</span>
+<span class="good">DELETE /users/42          → delete user 42</span>
+<span class="good">GET    /users?page=2&limit=20  → paginated list</span>
+
+<span class="dim">// Response envelope</span>
+<span class="lbl">{</span>
+  <span class="str">"data"</span>: { "id": 42, "name": "Alice" },
+  <span class="str">"meta"</span>: { "page": 2, "total": 150 },
+  <span class="str">"error"</span>: null
+<span class="lbl">}</span></pre>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 6: CLEAN CODE          -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="clean">
+    <span class="section-num">06</span>
+    <div class="section-title">Clean Code Principles</div>
+
+    <p>LLD interviews evaluate not just whether your code works, but whether it's <strong style="color:#fff;">readable, maintainable, and well-structured</strong>. These principles are the difference between code that works and code that teams can build on.</p>
+
+    <div class="clean-grid">
+      <div class="clean-card">
+        <div class="clean-name">DRY</div>
+        <p><strong style="color:#fff;">Don't Repeat Yourself.</strong> Every piece of knowledge should have one authoritative source. Duplication means two places to update and two places to get out of sync.</p>
+      </div>
+      <div class="clean-card">
+        <div class="clean-name">KISS</div>
+        <p><strong style="color:#fff;">Keep It Simple.</strong> The simplest solution that works is the best. Don't pre-optimise, don't over-engineer. Simple code is easier to test, read, and modify.</p>
+      </div>
+      <div class="clean-card">
+        <div class="clean-name">YAGNI</div>
+        <p><strong style="color:#fff;">You Aren't Gonna Need It.</strong> Don't build features "just in case". Build what's needed now. Every premature abstraction adds complexity that you'll maintain forever.</p>
+      </div>
+      <div class="clean-card">
+        <div class="clean-name">Avoid God Classes</div>
+        <p>A class that knows and does too much. UserManager that handles auth + profiles + billing + notifications. Break it down. If it's hard to name, it's doing too much.</p>
+      </div>
+      <div class="clean-card">
+        <div class="clean-name">Small Functions</div>
+        <p>Functions should do ONE thing and do it well. If you can't describe what a function does in one sentence without "and", split it. Aim for under 20 lines per function.</p>
+      </div>
+      <div class="clean-card">
+        <div class="clean-name">Meaningful Names</div>
+        <p>Names should reveal intent. <code style="color:#4ade80;font-size:10px;">calculateInvoiceTotal()</code> beats <code style="color:#f43f5e;font-size:10px;">calc()</code>. <code style="color:#4ade80;font-size:10px;">isUserActive</code> beats <code style="color:#f43f5e;font-size:10px;">flag</code>. Good names eliminate the need for most comments.</p>
+      </div>
+    </div>
+
+    <div class="callout co-green">
+      <div class="callout-title">LLD Interview Checklist</div>
+      <p>
+        <strong style="color:#fff;">1.</strong> Clarify requirements first — functional (what it does) and constraints (scale, edge cases)<br>
+        <strong style="color:#fff;">2.</strong> Identify the core entities and their relationships<br>
+        <strong style="color:#fff;">3.</strong> Define interfaces before writing classes (depend on abstractions — DIP)<br>
+        <strong style="color:#fff;">4.</strong> Explicitly name which design patterns you're using and why<br>
+        <strong style="color:#fff;">5.</strong> Show that your design handles adding new features without touching old code (OCP)<br>
+        <strong style="color:#fff;">6.</strong> Think about thread safety if the system is concurrent<br>
+        <strong style="color:#fff;">7.</strong> Be ready to write unit tests — testable code = good OOP code
+      </p>
+    </div>
+  </div>
+
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="gr-label">Key Takeaway — Phase 05</div>
+    <p>LLD IS NOT ABOUT MEMORISING PATTERNS.<br>
+    IT'S ABOUT SEEING THE PROBLEM<br>
+    AND KNOWING <span style="color:var(--accent1);">WHICH TOOL FITS</span>.</p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-row">
+    <a class="nav-btn" href="phase-04-advanced-hld.html">← Phase 04: Advanced HLD</a>
+    <a class="nav-btn" href="phase-06-07-practice.html">Phase 06 & 07: Practice Systems →</a>
+  </div>
+
+</div>
+</body>
+</html>

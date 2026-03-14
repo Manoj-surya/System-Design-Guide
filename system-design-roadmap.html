@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent1: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow1: rgba(0,229,255,0.15);
+    --glow2: rgba(124,58,237,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeDown 0.8s ease forwards;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    border: 1px solid var(--accent1);
+    padding: 4px 14px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent1) 70%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Timeline spine */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent1), var(--accent2), var(--accent4), var(--accent3), var(--accent5));
+    opacity: 0.4;
+  }
+
+  /* Phase blocks */
+  .phase {
+    margin-bottom: 52px;
+    animation: fadeUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .phase:nth-child(1) { animation-delay: 0.1s; }
+  .phase:nth-child(2) { animation-delay: 0.2s; }
+  .phase:nth-child(3) { animation-delay: 0.3s; }
+  .phase:nth-child(4) { animation-delay: 0.4s; }
+  .phase:nth-child(5) { animation-delay: 0.5s; }
+  .phase:nth-child(6) { animation-delay: 0.6s; }
+  .phase:nth-child(7) { animation-delay: 0.7s; }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .phase-header::before {
+    content: '';
+    position: absolute;
+    left: -34px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    background: var(--bg);
+  }
+
+  .phase-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .duration-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+    opacity: 0.9;
+  }
+
+  /* Color themes per phase */
+  .phase-1 { --phase-color: #00e5ff; }
+  .phase-2 { --phase-color: #7c3aed; }
+  .phase-3 { --phase-color: #f59e0b; }
+  .phase-4 { --phase-color: #10b981; }
+  .phase-5 { --phase-color: #ef4444; }
+  .phase-6 { --phase-color: #ec4899; }
+  .phase-7 { --phase-color: #a78bfa; }
+
+  .phase .phase-header { color: var(--phase-color); }
+  .phase .duration-badge {
+    background: color-mix(in srgb, var(--phase-color) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--phase-color) 40%, transparent);
+    color: var(--phase-color);
+  }
+
+  /* Topic grid */
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+
+  .topic-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--phase-color);
+    padding: 16px 18px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+
+  .topic-card:hover {
+    transform: translateX(4px);
+    box-shadow: -4px 0 20px color-mix(in srgb, var(--phase-color) 20%, transparent);
+  }
+
+  .topic-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .subtopics {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .subtopics li {
+    font-size: 11px;
+    color: var(--muted);
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .subtopics li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--phase-color);
+    opacity: 0.6;
+  }
+
+  /* Wide card spanning full width */
+  .topic-card.wide {
+    grid-column: 1 / -1;
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .chip {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--phase-color) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--phase-color) 30%, transparent);
+    color: var(--phase-color);
+    opacity: 0.9;
+  }
+
+  /* Practice section */
+  .practice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .practice-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--phase-color);
+    padding: 10px 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    transition: transform 0.2s;
+  }
+
+  .practice-item:hover {
+    transform: translateX(4px);
+  }
+
+  .practice-item span {
+    display: block;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+
+  /* Timeline summary bar */
+  .timeline-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px 28px;
+    margin-bottom: 52px;
+    animation: fadeUp 0.5s ease 0.05s forwards;
+    opacity: 0;
+  }
+
+  .timeline-bar h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .months {
+    display: flex;
+    gap: 0;
+    height: 36px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .month-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: rgba(0,0,0,0.8);
+    font-weight: 700;
+    transition: flex 0.3s;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    .topics-grid { grid-template-columns: 1fr; }
+    .phase-title { font-size: 1.1rem; }
+    h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="tag">Complete Guide</div>
+    <h1>System Design Roadmap</h1>
+    <p class="subtitle">HLD + LLD · All Patterns · All Models · Interview Ready</p>
+  </header>
+
+  <!-- Timeline bar -->
+  <div class="timeline-bar">
+    <h3>Estimated Timeline — 4 to 6 Months</h3>
+    <div class="months">
+      <div class="month-segment" style="flex:1; background:#00e5ff;">M1</div>
+      <div class="month-segment" style="flex:1; background:#38b2f5;">M2</div>
+      <div class="month-segment" style="flex:1; background:#7c3aed;">M3</div>
+      <div class="month-segment" style="flex:1; background:#a855f7;">M4</div>
+      <div class="month-segment" style="flex:1; background:#10b981;">M5</div>
+      <div class="month-segment" style="flex:1; background:#f59e0b;">M6</div>
+    </div>
+    <div style="display:flex; gap:16px; margin-top:10px; flex-wrap:wrap;">
+      <span style="font-size:11px; color:#00e5ff;">█ Month 1–2: Fundamentals + HLD Core</span>
+      <span style="font-size:11px; color:#7c3aed;">█ Month 3–4: Advanced HLD + LLD Start</span>
+      <span style="font-size:11px; color:#10b981;">█ Month 5: LLD Deep Dive</span>
+      <span style="font-size:11px; color:#f59e0b;">█ Month 6: Practice + Mock Interviews</span>
+    </div>
+  </div>
+
+  <div class="timeline">
+
+    <!-- PHASE 1 -->
+    <div class="phase phase-1">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 01</span>
+        <span class="phase-title">Foundations & Prerequisites</span>
+        <span class="duration-badge"><a style="color:#00e5ff" href="phase-01-foundations.html" target="_blank">Week 1–2</a></span>
+      </div>
+      <div class="topics-grid">
+        <div class="topic-card">
+          <div class="topic-name">How the Internet Works</div>
+          <ul class="subtopics">
+            <li>DNS resolution & how domain → IP works</li>
+            <li>Request-response cycle</li>
+            <li>TCP vs UDP — differences & when to use</li>
+            <li>HTTP/1.1 vs HTTP/2 vs HTTP/3</li>
+            <li>HTTPS & TLS handshake</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Threads, Processes & Concurrency</div>
+          <ul class="subtopics">
+            <li>Processes vs threads</li>
+            <li>Context switching</li>
+            <li>Synchronous vs asynchronous execution</li>
+            <li>Blocking vs non-blocking I/O</li>
+            <li>Event loops (Node.js model)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Serverless vs Serverful</div>
+          <ul class="subtopics">
+            <li>AWS EC2 (serverful) — full control</li>
+            <li>AWS Lambda (serverless) — managed</li>
+            <li>Trade-offs: cost, cold starts, scale</li>
+            <li>When to use each</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Vertical vs Horizontal Scaling</div>
+          <ul class="subtopics">
+            <li>Vertical: more RAM/CPU to one server</li>
+            <li>Horizontal: add more servers</li>
+            <li>Limits of vertical scaling</li>
+            <li>Stateless architecture for horizontal scale</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase phase-2">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 02</span>
+        <span class="phase-title">Databases — Deep Dive</span>
+        <span class="duration-badge"><a style="color: #7c3aed;" href="phase-02-databases.html" target="_blank">Week 3–4</a></span>
+      </div>
+      <div class="topics-grid">
+        <div class="topic-card">
+          <div class="topic-name">SQL Databases</div>
+          <ul class="subtopics">
+            <li>ACID properties (Atomicity, Consistency, Isolation, Durability)</li>
+            <li>Indexes, joins, transactions</li>
+            <li>PostgreSQL, MySQL use cases</li>
+            <li>When to prefer SQL (payments, banking)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">NoSQL Databases</div>
+          <ul class="subtopics">
+            <li>Document DB — MongoDB (flexible schema)</li>
+            <li>Key-Value — Redis, DynamoDB</li>
+            <li>Wide-column — Cassandra (time-series, logs)</li>
+            <li>Graph DB — Neo4j (social networks)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Sharding & Partitioning</div>
+          <ul class="subtopics">
+            <li>Horizontal partitioning (sharding)</li>
+            <li>Range-based sharding</li>
+            <li>Hash-based sharding</li>
+            <li>Directory-based sharding</li>
+            <li>Hotspot problem & re-sharding</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Replication & Migration</div>
+          <ul class="subtopics">
+            <li>Leader-follower replication</li>
+            <li>Multi-leader replication</li>
+            <li>Leaderless replication</li>
+            <li>Synchronous vs async replication</li>
+            <li>Zero-downtime migration strategies</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">CAP Theorem</div>
+          <ul class="subtopics">
+            <li>Consistency — every read gets latest write</li>
+            <li>Availability — every request gets a response</li>
+            <li>Partition tolerance — works despite network splits</li>
+            <li>CP systems: HBase, Zookeeper</li>
+            <li>AP systems: Cassandra, CouchDB</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Consistency Models</div>
+          <ul class="subtopics">
+            <li>Strong / Linearizable consistency</li>
+            <li>Eventual consistency</li>
+            <li>Causal consistency</li>
+            <li>Quorum consistency (read/write quorum)</li>
+            <li>Isolation levels: Read Uncommitted → Serializable</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase phase-3">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 03</span>
+        <span class="phase-title">HLD Core Components</span>
+        <span class="duration-badge"><a style="color: #f59e0b;" href="phase-03-hld-core.html" target="_blank">Week 5–7</a></span>
+      </div>
+      <div class="topics-grid">
+        <div class="topic-card">
+          <div class="topic-name">Caching</div>
+          <ul class="subtopics">
+            <li>Redis vs Memcached</li>
+            <li>Cache-aside, Write-through, Write-back, Write-around</li>
+            <li>Eviction: LRU, LFU, Segmented LRU</li>
+            <li>Cache stampede & solutions</li>
+            <li>Distributed caching</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">CDN (Content Delivery Networks)</div>
+          <ul class="subtopics">
+            <li>Push CDN vs Pull CDN</li>
+            <li>Edge servers & PoP locations</li>
+            <li>Static asset delivery (images, video)</li>
+            <li>Cloudflare, AWS CloudFront</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Load Balancers</div>
+          <ul class="subtopics">
+            <li>Round Robin</li>
+            <li>Least Connections</li>
+            <li>IP Hash (sticky sessions)</li>
+            <li>Weighted Round Robin</li>
+            <li>L4 vs L7 load balancing</li>
+            <li>Stateless vs stateful LB</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Consistent Hashing</div>
+          <ul class="subtopics">
+            <li>Problem with naive modulo hashing</li>
+            <li>Hash ring concept</li>
+            <li>Virtual nodes for even distribution</li>
+            <li>Used in: Cassandra, DynamoDB, CDNs</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Message Queues</div>
+          <ul class="subtopics">
+            <li>Producer → Queue → Consumer model</li>
+            <li>Kafka — partitions, offsets, consumer groups</li>
+            <li>RabbitMQ — exchanges, routing keys, bindings</li>
+            <li>Pub/Sub model (topics & subscribers)</li>
+            <li>At-least-once vs exactly-once delivery</li>
+            <li>Dead letter queues</li>
+            <li>When to use queues vs direct calls</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">API Gateway & Reverse Proxy</div>
+          <ul class="subtopics">
+            <li>Forward proxy vs reverse proxy</li>
+            <li>API Gateway responsibilities</li>
+            <li>Rate limiting algorithms</li>
+            <li>Token bucket, leaky bucket, sliding window</li>
+            <li>DDoS protection via rate limiting</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Real-time Communication</div>
+          <ul class="subtopics">
+            <li>Short polling vs long polling</li>
+            <li>WebSockets — full duplex, persistent conn</li>
+            <li>Server-Sent Events (SSE)</li>
+            <li>WebRTC — peer-to-peer video/audio</li>
+            <li>XMPP protocol (WhatsApp)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Push vs Pull Architecture</div>
+          <ul class="subtopics">
+            <li>Push — server sends data proactively</li>
+            <li>Pull — client requests when needed</li>
+            <li>Fan-out on write vs fan-out on read</li>
+            <li>Twitter/Instagram feed design trade-offs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase phase-4">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 04</span>
+        <span class="phase-title">Advanced HLD — Architecture Patterns</span>
+        <span class="duration-badge"><a style="color: #10b981;" href="phase-04-advanced-hld.html" target="_blank">Week 8–9</a></span>
+      </div>
+      <div class="topics-grid">
+        <div class="topic-card">
+          <div class="topic-name">Monolith vs Microservices</div>
+          <ul class="subtopics">
+            <li>Monolith — single deployable unit</li>
+            <li>Microservices — independently deployable services</li>
+            <li>Single Point of Failure problem</li>
+            <li>Cascading failures & circuit breakers</li>
+            <li>Service mesh (Istio)</li>
+            <li>When to migrate & how (strangler fig pattern)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Containerisation & Orchestration</div>
+          <ul class="subtopics">
+            <li>Docker — images, containers, Dockerfile</li>
+            <li>Container registries (Docker Hub, ECR)</li>
+            <li>Kubernetes — pods, deployments, services</li>
+            <li>Auto-scaling with HPA</li>
+            <li>Service discovery</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Security Patterns</div>
+          <ul class="subtopics">
+            <li>Authentication vs Authorization</li>
+            <li>JWT tokens — structure, signing, expiry</li>
+            <li>OAuth 2.0 flow</li>
+            <li>Access Control Lists (ACL)</li>
+            <li>Role-Based Access Control (RBAC)</li>
+            <li>Encryption at rest vs in transit</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Monitoring & Observability</div>
+          <ul class="subtopics">
+            <li>Metrics — Prometheus, AWS CloudWatch</li>
+            <li>Dashboards — Grafana</li>
+            <li>Distributed tracing — Jaeger, Zipkin</li>
+            <li>Structured logging (ELK stack)</li>
+            <li>Anomaly detection & alerting</li>
+            <li>SLA, SLO, SLI definitions</li>
+          </ul>
+        </div>
+        <div class="topic-card wide">
+          <div class="topic-name">System Design Trade-offs — Master Reference</div>
+          <div class="tag-row">
+            <span class="chip">SQL vs NoSQL</span>
+            <span class="chip">Consistency vs Availability</span>
+            <span class="chip">Push vs Pull</span>
+            <span class="chip">Memory vs Latency vs Throughput</span>
+            <span class="chip">Sync vs Async</span>
+            <span class="chip">Monolith vs Microservices</span>
+            <span class="chip">Serverless vs Serverful</span>
+            <span class="chip">Strong vs Eventual Consistency</span>
+            <span class="chip">Cache vs Fresh Data</span>
+            <span class="chip">Normalisation vs Denormalisation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase phase-5">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 05</span>
+        <span class="phase-title">Low Level Design — OOP & Patterns</span>
+        <span class="duration-badge"><a style="color: #ef4444;" href="phase-05-lld.html" target="_blank">Week 10–12</a></span>
+      </div>
+      <div class="topics-grid">
+        <div class="topic-card">
+          <div class="topic-name">OOP Pillars</div>
+          <ul class="subtopics">
+            <li>Encapsulation — hide internal state</li>
+            <li>Abstraction — expose only what's needed</li>
+            <li>Inheritance — reuse through parent-child</li>
+            <li>Polymorphism — same interface, different behaviour</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">SOLID Principles</div>
+          <ul class="subtopics">
+            <li>S — Single Responsibility Principle</li>
+            <li>O — Open/Closed Principle</li>
+            <li>L — Liskov Substitution Principle</li>
+            <li>I — Interface Segregation Principle</li>
+            <li>D — Dependency Inversion Principle</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Creational Design Patterns</div>
+          <ul class="subtopics">
+            <li>Singleton — one instance globally</li>
+            <li>Factory Method — delegate creation to subclass</li>
+            <li>Abstract Factory — families of objects</li>
+            <li>Builder — step-by-step object construction</li>
+            <li>Prototype — clone existing objects</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Structural Design Patterns</div>
+          <ul class="subtopics">
+            <li>Adapter — convert one interface to another</li>
+            <li>Decorator — add behaviour dynamically</li>
+            <li>Facade — simplified interface to complex system</li>
+            <li>Proxy — control access to an object</li>
+            <li>Composite — tree structures of objects</li>
+            <li>Bridge — decouple abstraction from implementation</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Behavioural Design Patterns</div>
+          <ul class="subtopics">
+            <li>Observer — notify subscribers on state change</li>
+            <li>Strategy — swap algorithms at runtime</li>
+            <li>Command — encapsulate requests as objects</li>
+            <li>State — change behaviour based on state</li>
+            <li>Template Method — define skeleton, override steps</li>
+            <li>Iterator — traverse collections uniformly</li>
+            <li>Chain of Responsibility — pass request along chain</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Concurrency & Thread Safety</div>
+          <ul class="subtopics">
+            <li>Race conditions & how to prevent them</li>
+            <li>Mutex, Semaphore, Monitor locks</li>
+            <li>Deadlock, livelock, starvation</li>
+            <li>Producer-Consumer pattern</li>
+            <li>Thread pool pattern</li>
+            <li>Immutability as a safety strategy</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">API Design</div>
+          <ul class="subtopics">
+            <li>RESTful API principles & conventions</li>
+            <li>Request/response object modelling</li>
+            <li>API versioning strategies (URL, header)</li>
+            <li>Idempotency (PUT, DELETE)</li>
+            <li>Error handling & status codes</li>
+            <li>Pagination (cursor vs offset)</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">UML Diagrams</div>
+          <ul class="subtopics">
+            <li>Class diagrams — relationships & multiplicity</li>
+            <li>Sequence diagrams — time-ordered interactions</li>
+            <li>Component diagrams — system structure</li>
+            <li>Use case diagrams — actor-system interaction</li>
+          </ul>
+        </div>
+        <div class="topic-card">
+          <div class="topic-name">Clean Code Principles</div>
+          <ul class="subtopics">
+            <li>DRY — Don't Repeat Yourself</li>
+            <li>KISS — Keep It Simple</li>
+            <li>YAGNI — You Aren't Gonna Need It</li>
+            <li>Avoiding God classes</li>
+            <li>Meaningful naming & small functions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 6 -->
+    <div class="phase phase-6">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 06</span>
+        <span class="phase-title">Practice — HLD Systems</span>
+        <span class="duration-badge"><a style="color: #ec4899;" href="phase-06-07-practice.html" target="_blank">Week 13–16</a></span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Design each system end-to-end. Identify functional & non-functional requirements. Draw architecture diagrams.</p>
+      <div class="practice-grid">
+        <div class="practice-item">WhatsApp<span>Messaging, queues, presence</span></div>
+        <div class="practice-item">YouTube<span>Video upload, CDN, streaming</span></div>
+        <div class="practice-item">Twitter / X<span>Fan-out, feed, trends</span></div>
+        <div class="practice-item">Netflix<span>Recommendations, CDN</span></div>
+        <div class="practice-item">Instagram<span>Photos, social graph</span></div>
+        <div class="practice-item">Uber<span>Geo-indexing, matching</span></div>
+        <div class="practice-item">Amazon<span>Cart, inventory, payments</span></div>
+        <div class="practice-item">Zoom<span>WebRTC, rooms, recording</span></div>
+        <div class="practice-item">Google Drive<span>File storage, sharing</span></div>
+        <div class="practice-item">Pastebin<span>URL shortener, expiry</span></div>
+      </div>
+    </div>
+
+    <!-- PHASE 7 -->
+    <div class="phase phase-7">
+      <div class="phase-header">
+        <span class="phase-number">PHASE 07</span>
+        <span class="phase-title">Practice — LLD Problems</span>
+        <span class="duration-badge"><a style="color: #a78bfa;" href="phase-06-07-practice.html" target="_blank">Week 13–16</a></span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Code each one. Write classes, interfaces, and apply design patterns. Focus on extensibility.</p>
+      <div class="practice-grid">
+        <div class="practice-item">Parking Lot<span>OOP, Strategy pattern</span></div>
+        <div class="practice-item">Chess Game<span>State, Command pattern</span></div>
+        <div class="practice-item">URL Shortener<span>Hashing, DB design</span></div>
+        <div class="practice-item">Notification System<span>Observer, Queue</span></div>
+        <div class="practice-item">Elevator System<span>State machine</span></div>
+        <div class="practice-item">Library System<span>OOP, SOLID</span></div>
+        <div class="practice-item">ATM Machine<span>State, Factory</span></div>
+        <div class="practice-item">Hotel Booking<span>Builder, Facade</span></div>
+        <div class="practice-item">Rate Limiter<span>Token bucket, Sliding window</span></div>
+        <div class="practice-item">Task Manager (Jira)<span>Composite, Observer</span></div>
+      </div>
+    </div>
+
+  </div><!-- /timeline -->
+
+  <!-- Footer note -->
+  <div style="margin-top:48px; padding:20px 24px; border:1px solid #1e1e2e; background:#12121a; text-align:center;">
+    <p style="font-size:11px; color:#475569; line-height:1.8;">
+      <span style="color:#00e5ff;">KEY INSIGHT</span> &nbsp;·&nbsp;
+      System Design has no single correct answer. The goal is to articulate trade-offs clearly,
+      justify your choices, and show you've thought through scalability, failure modes, and edge cases.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

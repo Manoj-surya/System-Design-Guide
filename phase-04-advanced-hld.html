@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 04 — Advanced HLD</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060610;
+    --surface: #0c0c1e;
+    --surface2: #10102a;
+    --border: #1c1c3a;
+    --accent1: #10b981;
+    --accent1-light: #34d399;
+    --accent2: #f43f5e;
+    --accent3: #f59e0b;
+    --accent4: #3b82f6;
+    --accent4-light: #93c5fd;
+    --accent5: #a855f7;
+    --accent5-light: #d8b4fe;
+    --text: #e2e8f0;
+    --muted: #44475a;
+    --light: #8892a4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(16,185,129,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(59,130,246,0.04) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(16,185,129,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(16,185,129,0.018) 1px, transparent 1px);
+    background-size: 52px 52px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 52px 28px 110px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── Header ── */
+  header { margin-bottom: 60px; animation: fadeDown 0.7s ease forwards; }
+
+  .breadcrumb {
+    font-size: 10px; letter-spacing: 3px; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .breadcrumb span { color: var(--accent1-light); }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+    font-weight: 400; line-height: 1.05;
+    background: linear-gradient(135deg, #fff 0%, var(--accent1-light) 50%, var(--accent4-light) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 20px;
+  }
+
+  .header-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; letter-spacing: 1.5px; padding: 4px 12px;
+    border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-green  { background: rgba(16,185,129,0.1);  border: 1px solid rgba(16,185,129,0.3);  color: var(--accent1-light); }
+  .badge-blue   { background: rgba(59,130,246,0.1);  border: 1px solid rgba(59,130,246,0.3);  color: var(--accent4-light); }
+  .badge-red    { background: rgba(244,63,94,0.1);   border: 1px solid rgba(244,63,94,0.3);   color: #fb7185; }
+  .badge-purple { background: rgba(168,85,247,0.1);  border: 1px solid rgba(168,85,247,0.3);  color: var(--accent5-light); }
+  .badge-amber  { background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.3);  color: #fcd34d; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 24px 28px; margin-bottom: 64px;
+    animation: fadeUp 0.5s ease 0.1s forwards; opacity: 0;
+  }
+  .toc-title {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent1-light); margin-bottom: 14px;
+  }
+  .toc-list {
+    list-style: none;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 5px 24px;
+  }
+  .toc-list li a {
+    font-size: 11.5px; color: var(--light); text-decoration: none;
+    display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+  }
+  .toc-list li a:hover { color: var(--accent1-light); }
+  .toc-list li a::before { content: '▸'; color: var(--accent1); font-size: 10px; opacity: 0.7; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s ease forwards; opacity: 0;
+  }
+  .section:nth-child(1) { animation-delay: 0.12s; }
+  .section:nth-child(2) { animation-delay: 0.20s; }
+  .section:nth-child(3) { animation-delay: 0.28s; }
+  .section:nth-child(4) { animation-delay: 0.36s; }
+  .section:nth-child(5) { animation-delay: 0.44s; }
+
+  .section-num {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent1); opacity: 0.7; margin-bottom: 4px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem; font-weight: 400; color: #fff;
+    padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+  }
+  .subsection { margin-top: 40px; }
+  .subsection-title {
+    font-size: 0.95rem; font-weight: 500;
+    color: var(--accent1-light); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .subsection-title::before {
+    content: ''; display: inline-block;
+    width: 20px; height: 2px; background: var(--accent1); flex-shrink: 0;
+  }
+
+  p { font-size: 12.5px; color: var(--light); margin-bottom: 14px; line-height: 1.9; }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: #050510; border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 20px 22px; margin: 16px 0; overflow-x: auto;
+  }
+  .code-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent1); margin-bottom: 10px; opacity: 0.8;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+    color: #a7f3d0; line-height: 1.8; white-space: pre;
+  }
+  pre .dim     { color: #2a2a4a; }
+  pre .kw      { color: var(--accent4-light); }
+  pre .str     { color: #86efac; }
+  pre .arrow   { color: var(--accent1-light); }
+  pre .lbl     { color: var(--accent3); }
+  pre .good    { color: var(--accent1-light); }
+  pre .bad     { color: var(--accent2); }
+  pre .purple  { color: var(--accent5-light); }
+  pre .blue    { color: var(--accent4-light); }
+  pre .white   { color: #fff; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  thead tr { background: #050510; border-bottom: 2px solid var(--accent1); }
+  thead th {
+    padding: 10px 16px; text-align: left; font-size: 10px;
+    letter-spacing: 1.5px; color: #fff; text-transform: uppercase; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 16px; color: var(--light); vertical-align: top; line-height: 1.65; }
+  tbody td:first-child { color: var(--accent1-light); font-weight: 500; white-space: nowrap; }
+
+  /* ── Callouts ── */
+  .callout { padding: 18px 22px; margin: 18px 0; font-size: 12px; line-height: 1.8; }
+  .callout-green  { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2);  border-left: 3px solid var(--accent1); }
+  .callout-blue   { background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2);  border-left: 3px solid var(--accent4); }
+  .callout-red    { background: rgba(244,63,94,0.05);  border: 1px solid rgba(244,63,94,0.2);   border-left: 3px solid var(--accent2); }
+  .callout-amber  { background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2);  border-left: 3px solid var(--accent3); }
+  .callout-purple { background: rgba(168,85,247,0.05); border: 1px solid rgba(168,85,247,0.2);  border-left: 3px solid var(--accent5); }
+  .callout-title {
+    font-size: 9px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .callout-green  .callout-title { color: var(--accent1-light); }
+  .callout-blue   .callout-title { color: var(--accent4-light); }
+  .callout-red    .callout-title { color: #fb7185; }
+  .callout-amber  .callout-title { color: #fcd34d; }
+  .callout-purple .callout-title { color: var(--accent5-light); }
+  .callout p { color: var(--light); margin: 0; font-size: 12px; }
+
+  /* ── Card grids ── */
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px; margin: 16px 0;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 18px 20px; transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 2px solid var(--card-color, var(--accent1));
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
+  .card-title { font-size: 0.9rem; font-weight: 500; color: #fff; margin-bottom: 8px; }
+  .card p { font-size: 11.5px; color: var(--muted); margin: 0; line-height: 1.65; }
+
+  /* ── Two-col grid ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 20px; border-top: 3px solid var(--panel-color, var(--accent1));
+  }
+  .panel-title { font-size: 0.95rem; font-weight: 500; color: var(--panel-color, var(--accent1)); margin-bottom: 12px; }
+  .panel ul { list-style: none; }
+  .panel ul li {
+    font-size: 11.5px; color: var(--muted);
+    padding: 3px 0 3px 14px; position: relative; line-height: 1.6;
+  }
+  .panel ul li::before { content: '›'; position: absolute; left: 0; color: var(--panel-color, var(--accent1)); }
+
+  /* ── Failure mode cards ── */
+  .failure-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .failure-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--fc, var(--accent2));
+    padding: 14px 16px;
+  }
+  .failure-name { font-size: 0.85rem; font-weight: 500; color: var(--fc, var(--accent2)); margin-bottom: 6px; }
+  .failure-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+  /* ── Security pattern cards ── */
+  .sec-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .sec-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 2px solid var(--accent5);
+    padding: 16px 18px;
+  }
+  .sec-name { font-size: 0.85rem; font-weight: 500; color: var(--accent5-light); margin-bottom: 8px; }
+  .sec-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+  /* ── Trade-off matrix ── */
+  .tradeoff-row {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 16px 20px; margin: 8px 0;
+    display: grid; grid-template-columns: 200px 1fr 1fr;
+    gap: 16px; align-items: start;
+    transition: background 0.15s;
+  }
+  .tradeoff-row:hover { background: var(--surface2); }
+  .tradeoff-name { font-size: 0.85rem; font-weight: 500; color: #fff; }
+  .tradeoff-a { font-size: 11.5px; color: var(--accent1-light); line-height: 1.6; }
+  .tradeoff-b { font-size: 11.5px; color: var(--accent2);       line-height: 1.6; }
+  .tradeoff-header {
+    display: grid; grid-template-columns: 200px 1fr 1fr;
+    gap: 16px; padding: 8px 20px; margin-bottom: 4px;
+  }
+  .tradeoff-header span { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+  /* ── Monitoring stack ── */
+  .monitor-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px; margin: 16px 0;
+  }
+  .monitor-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent4);
+    padding: 14px 16px;
+  }
+  .monitor-layer { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent4); margin-bottom: 4px; opacity: 0.8; }
+  .monitor-name { font-size: 0.85rem; font-weight: 500; color: #fff; margin-bottom: 6px; }
+  .monitor-card p { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+  /* ── Strangler fig visual ── */
+  .migration-steps {
+    display: flex; flex-direction: column; gap: 8px; margin: 16px 0;
+  }
+  .mig-step {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .mig-num {
+    font-size: 1.4rem; font-family: 'DM Serif Display', serif;
+    color: var(--accent1); flex-shrink: 0; line-height: 1;
+    margin-top: 2px;
+  }
+  .mig-title { font-size: 0.85rem; font-weight: 500; color: #fff; margin-bottom: 4px; }
+  .mig-desc { font-size: 11px; color: var(--muted); line-height: 1.6; margin: 0; }
+
+  /* ── Golden rule ── */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(16,185,129,0.07), rgba(59,130,246,0.05));
+    border: 1px solid rgba(16,185,129,0.2);
+    padding: 32px 36px; margin-top: 64px; text-align: center;
+    animation: fadeUp 0.6s ease 0.55s forwards; opacity: 0;
+  }
+  .gr-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent1); margin-bottom: 14px; }
+  .golden-rule p {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem; color: #fff; line-height: 1.65; margin: 0;
+  }
+
+  .nav-row { display: flex; justify-content: space-between; margin-top: 48px; gap: 12px; flex-wrap: wrap; }
+  .nav-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 13px 22px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--accent1-light); text-decoration: none;
+    display: flex; align-items: center; gap: 8px; transition: background 0.2s, border-color 0.2s;
+  }
+  .nav-btn:hover { background: rgba(16,185,129,0.06); border-color: var(--accent1); }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    .tradeoff-row, .tradeoff-header { grid-template-columns: 1fr; }
+    .card-grid, .failure-grid, .sec-grid, .monitor-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem; }
+    .section-title { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 04</span></div>
+    <h1>Advanced HLD<br>Architecture</h1>
+    <div class="header-meta">
+      <span class="badge badge-green">Week 8 – 9</span>
+      <span class="badge badge-blue">5 Core Topics</span>
+      <span class="badge badge-red">Microservices · Failures</span>
+      <span class="badge badge-purple">Security · Monitoring</span>
+      <span class="badge badge-amber">Trade-offs Master Ref</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#monolith">Monolith vs Microservices</a></li>
+      <li><a href="#failures">Failure Patterns & Resilience</a></li>
+      <li><a href="#containers">Docker & Kubernetes</a></li>
+      <li><a href="#security">Security Patterns</a></li>
+      <li><a href="#monitoring">Monitoring & Observability</a></li>
+      <li><a href="#tradeoffs">System Design Trade-offs Master Ref</a></li>
+    </ul>
+  </div>
+
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SECTION 1: MONOLITH vs MICROSERVICES -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="section" id="monolith">
+    <div class="section-num">Topic 01</div>
+    <div class="section-title">Monolith vs Microservices</div>
+
+    <p>Every application starts as a monolith. The question isn't which is better — it's <strong style="color:#fff;">when does the trade-off tip towards microservices</strong>. Getting this wrong in either direction is expensive.</p>
+
+    <div class="two-col">
+      <div class="panel" style="--panel-color: #34d399;">
+        <div class="panel-title">Monolith</div>
+        <ul>
+          <li>Single deployable unit — one codebase, one process</li>
+          <li>Simple to develop, test, and deploy initially</li>
+          <li>No network latency between components</li>
+          <li>Easy to debug — one log stream, one process</li>
+          <li>Transactions across features are trivial (same DB)</li>
+          <li>Good for: early-stage startups, small teams</li>
+          <li>Becomes: slow to deploy, hard to scale independently</li>
+        </ul>
+      </div>
+      <div class="panel" style="--panel-color: #3b82f6;">
+        <div class="panel-title">Microservices</div>
+        <ul>
+          <li>Each service owns one business domain, deployed independently</li>
+          <li>Teams can work, deploy, and scale independently</li>
+          <li>Each service can use the best language/DB for its job</li>
+          <li>Failure in one service doesn't bring down the entire system</li>
+          <li>Scales horizontally per-service based on load</li>
+          <li>Good for: large teams, high scale, independent domains</li>
+          <li>Becomes: complex distributed systems, harder to debug</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Why You Start With Monolith — Always</div>
+      <div class="code-block">
+        <div class="code-label">Evolution of an Architecture</div>
+        <pre>
+<span class="lbl">Stage 1 — Startup (0 → 100K users)</span>
+  Single monolith on one server
+  One PostgreSQL database
+  <span class="good">✓ Ship fast, iterate fast, simple debugging</span>
+
+<span class="lbl">Stage 2 — Growth (100K → 1M users)</span>
+  Monolith scaled horizontally (multiple instances + load balancer)
+  Read replicas added to database
+  Redis cache layer introduced
+  <span class="good">✓ Still manageable, now handling scale</span>
+
+<span class="lbl">Stage 3 — Scale (1M+ users, 20+ engineers)</span>
+  Problem: 50 engineers pushing to same codebase → deployment conflicts
+  Problem: User service and Video service have very different scaling needs
+  Problem: A bug in Payments takes down the whole app
+  <span class="kw">→ Time to extract into microservices</span>
+
+<span class="lbl">Stage 4 — Microservices</span>
+  User Service  │  Video Service  │  Payment Service  │  Search Service
+  Each owns its DB, scales independently, deploys independently</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Strangler Fig Pattern — Migrating Safely</div>
+      <p>You never rewrite a monolith from scratch — that's called "the second system effect" and it almost always fails. Instead, you strangle it gradually:</p>
+
+      <div class="migration-steps">
+        <div class="mig-step">
+          <div class="mig-num">1</div>
+          <div>
+            <div class="mig-title">Identify a Bounded Context</div>
+            <p class="mig-desc">Pick a feature that is mostly self-contained and has clear boundaries — e.g. User Authentication. It should have minimal dependencies on other parts of the monolith.</p>
+          </div>
+        </div>
+        <div class="mig-step">
+          <div class="mig-num">2</div>
+          <div>
+            <div class="mig-title">Build the Microservice in Parallel</div>
+            <p class="mig-desc">Write the new Auth Service alongside the monolith. Don't delete monolith code yet. Both exist simultaneously.</p>
+          </div>
+        </div>
+        <div class="mig-step">
+          <div class="mig-num">3</div>
+          <div>
+            <div class="mig-title">Route Traffic via a Facade/Proxy</div>
+            <p class="mig-desc">Place a reverse proxy in front. Route /auth/* requests to the new service, everything else to the monolith. Gradually increase traffic percentage to the new service.</p>
+          </div>
+        </div>
+        <div class="mig-step">
+          <div class="mig-num">4</div>
+          <div>
+            <div class="mig-title">Delete the Old Code</div>
+            <p class="mig-desc">Once the new service handles 100% of traffic stably, delete the auth code from the monolith. Repeat for the next feature.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">Microservices Hidden Costs</div>
+        <p>Every microservice call that would have been a function call in a monolith is now a network request — adding latency, potential failure, and the need for retries. A transaction that used to be one DB call now requires distributed transactions (two-phase commit or SAGA pattern). Distributed systems are fundamentally harder to debug. Only migrate when the <strong style="color:#fff;">pain of staying monolith exceeds the pain of distributed systems</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 2: FAILURE PATTERNS    -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="failures">
+    <div class="section-num">Topic 02</div>
+    <div class="section-title">Failure Patterns &amp; Resilience</div>
+
+    <p>In distributed systems, failures are not exceptional — they are <strong style="color:#fff;">guaranteed to happen</strong>. Services crash, networks partition, disks fill up. Resilient systems are designed around the assumption of failure, not the hope of uptime.</p>
+
+    <div class="subsection">
+      <div class="subsection-title">Critical Failure Patterns to Know</div>
+
+      <div class="failure-grid">
+        <div class="failure-card" style="--fc: #f43f5e;">
+          <div class="failure-name">Single Point of Failure (SPOF)</div>
+          <p>Any component that, if it fails, takes down the entire system. Examples: a single load balancer, a single database with no replica. Solution: redundancy at every layer.</p>
+        </div>
+        <div class="failure-card" style="--fc: #f59e0b;">
+          <div class="failure-name">Cascading Failure</div>
+          <p>Service A fails → Service B times out waiting for A → B's thread pool exhausts → B fails → Service C fails. One failure propagates across the entire system like dominoes.</p>
+        </div>
+        <div class="failure-card" style="--fc: #a855f7;">
+          <div class="failure-name">Split Brain</div>
+          <p>Network partition causes two nodes to think they're both the leader. Both accept writes independently. When partition heals, data conflicts exist. Solved by quorum-based leader election.</p>
+        </div>
+        <div class="failure-card" style="--fc: #3b82f6;">
+          <div class="failure-name">Thundering Herd</div>
+          <p>System restarts after crash. Millions of clients reconnect simultaneously and overwhelm the recovering service. Solution: exponential backoff with jitter in clients.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Circuit Breaker Pattern — Preventing Cascades</div>
+      <p>The circuit breaker is one of the most important resilience patterns. It stops a failing service from being hammered with requests and gives it time to recover.</p>
+
+      <div class="code-block">
+        <div class="code-label">Circuit Breaker — 3 States</div>
+        <pre>
+<span class="good">CLOSED</span>  (normal operation)
+  │  All requests pass through to Service B
+  │  Track failure rate over a rolling window
+  │  If failures > threshold (e.g. 50%) → trip to OPEN
+  ▼
+<span class="bad">OPEN</span>    (circuit tripped)
+  │  ALL requests immediately rejected (fail fast)
+  │  No requests reach Service B — it gets breathing room
+  │  Return cached response or error to caller
+  │  After timeout (e.g. 30s) → move to HALF-OPEN
+  ▼
+<span class="lbl">HALF-OPEN</span>  (testing recovery)
+  │  Allow a few test requests through to Service B
+  │  If they succeed → reset to CLOSED  <span class="good">(recovered!)</span>
+  └  If they fail → back to OPEN         <span class="bad">(still down)</span>
+
+<span class="dim">Libraries: Netflix Hystrix, Resilience4j, AWS App Mesh</span></pre>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">Without Circuit Breaker — The Cascade</div>
+        <p>Service A calls Service B which is down. Without a circuit breaker, A waits for B's timeout (say 30 seconds) per request. A's thread pool fills with stuck requests. A becomes unresponsive. Service C calls A — same thing. The entire call chain is now frozen, not because they're failing, but because they're all waiting on a dead service.</p>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Other Resilience Patterns</div>
+      <div class="card-grid">
+        <div class="card" style="--card-color: #34d399;">
+          <div class="card-title">Retry with Exponential Backoff</div>
+          <p>On failure, retry after 1s, then 2s, then 4s, then 8s. Add random jitter to prevent synchronized retries. Prevents thundering herd on recovery.</p>
+        </div>
+        <div class="card" style="--card-color: #3b82f6;">
+          <div class="card-title">Bulkhead Pattern</div>
+          <p>Isolate resources for different callers. Payment service gets its own thread pool, Search gets its own. If Search overwhelms its pool, Payment is unaffected. Like watertight compartments in a ship.</p>
+        </div>
+        <div class="card" style="--card-color: #f59e0b;">
+          <div class="card-title">Timeout</div>
+          <p>Every service call must have an explicit timeout. Never wait indefinitely. If Service B hasn't responded in 500ms, fail fast and return an error or fallback. Prevents resource exhaustion.</p>
+        </div>
+        <div class="card" style="--card-color: #a855f7;">
+          <div class="card-title">Fallback / Graceful Degradation</div>
+          <p>When a service fails, return a degraded but useful response. Netflix: if recommendation service is down, show "Top 10 popular movies" instead of personalised picks.</p>
+        </div>
+        <div class="card" style="--card-color: #f43f5e;">
+          <div class="card-title">Idempotency</div>
+          <p>Design operations so repeating them has the same effect as doing them once. Critical for retries — if a payment request is retried, you must not charge the user twice. Use idempotency keys.</p>
+        </div>
+        <div class="card" style="--card-color: #00e5ff;">
+          <div class="card-title">Health Checks</div>
+          <p>Load balancers periodically ping each server's /health endpoint. If a server fails the check, it's removed from rotation automatically. Prevents routing traffic to dead servers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 3: DOCKER & KUBERNETES  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="containers">
+    <div class="section-num">Topic 03</div>
+    <div class="section-title">Docker &amp; Kubernetes</div>
+
+    <p>Containerisation is the foundation of modern microservice deployment. Docker packages your app and all its dependencies into a portable container. Kubernetes orchestrates thousands of those containers across a cluster of servers.</p>
+
+    <div class="subsection">
+      <div class="subsection-title">Docker — What and Why</div>
+
+      <div class="code-block">
+        <div class="code-label">The Problem Docker Solves</div>
+        <pre>
+<span class="bad">Without Docker:</span>
+  "It works on my machine!" ← the classic problem
+  Dev: Node 18, Ubuntu 22 → works fine
+  Prod: Node 16, CentOS 7 → crashes
+  New developer onboarding: 2 days of environment setup
+
+<span class="good">With Docker:</span>
+  App + Node 18 + dependencies + config = one Docker Image
+  Same image runs identically on: Dev laptop, CI server, Production
+  New developer: `docker-compose up` → running in 5 minutes
+
+<span class="lbl">Key Concepts:</span>
+  <span class="kw">Image</span>   = read-only blueprint (like a class)
+  <span class="kw">Container</span> = running instance of an image (like an object)
+  <span class="kw">Dockerfile</span> = instructions to build an image
+  <span class="kw">Registry</span> = storage for images (Docker Hub, AWS ECR)</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label">Dockerfile — Anatomy</div>
+        <pre>
+<span class="kw">FROM</span>    node:18-alpine          <span class="dim"># base image</span>
+<span class="kw">WORKDIR</span> /app                    <span class="dim"># working directory inside container</span>
+<span class="kw">COPY</span>    package*.json ./        <span class="dim"># copy dependency files</span>
+<span class="kw">RUN</span>     npm ci                  <span class="dim"># install dependencies (cached layer)</span>
+<span class="kw">COPY</span>    . .                     <span class="dim"># copy source code</span>
+<span class="kw">EXPOSE</span>  3000                    <span class="dim"># document which port the app uses</span>
+<span class="kw">CMD</span>     ["node", "server.js"]   <span class="dim"># command to run when container starts</span>
+
+<span class="dim">Each instruction = a layer. Unchanged layers are cached.
+This is why COPY package.json comes BEFORE COPY . . (source changes often,
+dependencies don't — cache the expensive npm install step)</span></pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Kubernetes — Orchestrating at Scale</div>
+      <p>Once you have hundreds of containers, someone needs to manage them — starting them, restarting crashed ones, scaling them up/down, distributing traffic. That's Kubernetes (K8s).</p>
+
+      <div class="code-block">
+        <div class="code-label">Kubernetes Architecture</div>
+        <pre>
+<span class="lbl">Control Plane</span> (the brain)
+  ├─ <span class="kw">API Server</span>     — central command, all kubectl commands go here
+  ├─ <span class="kw">Scheduler</span>      — decides which Node to run a Pod on
+  ├─ <span class="kw">Controller</span>     — ensures desired state matches actual state
+  └─ <span class="kw">etcd</span>           — distributed key-value store for cluster state
+
+<span class="lbl">Worker Nodes</span> (the muscle)
+  ├─ <span class="kw">Pod</span>            — smallest unit: one or more containers sharing network
+  ├─ <span class="kw">kubelet</span>        — agent on each node, runs and monitors pods
+  └─ <span class="kw">kube-proxy</span>     — handles networking rules between pods
+
+<span class="lbl">Key Resources:</span>
+  <span class="kw">Deployment</span>      — manages replica sets, rolling updates, rollbacks
+  <span class="kw">Service</span>         — stable IP/DNS for a set of pods (pods come and go)
+  <span class="kw">HPA</span>             — Horizontal Pod Autoscaler (scale based on CPU/memory)
+  <span class="kw">ConfigMap</span>       — inject config without rebuilding image
+  <span class="kw">Secret</span>          — inject sensitive values (passwords, tokens)</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label">Self-Healing in Action</div>
+        <pre>
+You declare: "I want 3 replicas of user-service running at all times"
+
+  K8s creates 3 pods → all running  <span class="good">✓</span>
+
+  Node 2 crashes  →  Pod 2 disappears
+  Controller detects: actual=2, desired=3
+  Scheduler picks a healthy node
+  New Pod 3 created on Node 1      <span class="good">← automatic, ~10 seconds</span>
+  Traffic re-routed away from dead pod immediately
+
+  <span class="dim">You don't page anyone. It just heals itself.</span></pre>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title">Service Discovery in Microservices</div>
+        <p>In a dynamic environment where pods start and stop constantly, how does Service A find Service B's IP address? K8s <strong style="color:#fff;">Services</strong> provide a stable DNS name (e.g. <code style="color:#93c5fd;">payment-service.default.svc.cluster.local</code>) that always points to live pods, regardless of which physical IPs they have. This is internal service discovery — no hardcoded IPs needed.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 4: SECURITY            -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="security">
+    <div class="section-num">Topic 04</div>
+    <div class="section-title">Security Patterns</div>
+
+    <p>Security in system design is about answering two questions: <strong style="color:#fff;">Who are you?</strong> (Authentication) and <strong style="color:#fff;">What are you allowed to do?</strong> (Authorization). Getting these right prevents data breaches, unauthorised access, and fraud.</p>
+
+    <div class="subsection">
+      <div class="subsection-title">Authentication — Proving Identity</div>
+
+      <div class="code-block">
+        <div class="code-label">JWT — JSON Web Token Anatomy</div>
+        <pre>
+A JWT is three base64-encoded parts joined by dots:
+
+  <span class="lbl">Header</span>.<span class="kw">Payload</span>.<span class="good">Signature</span>
+
+<span class="lbl">Header:</span>  { "alg": "HS256", "typ": "JWT" }
+         Which signing algorithm to use
+
+<span class="kw">Payload:</span> { "user_id": 42, "role": "admin", "exp": 1700000000 }
+         Claims — who this is and when it expires
+         <span class="bad">NOT encrypted — anyone can read it. Don't put secrets here!</span>
+
+<span class="good">Signature:</span> HMAC_SHA256(base64(header) + "." + base64(payload), SECRET_KEY)
+           Server signs it. Only server with the SECRET_KEY can verify it.
+           Prevents tampering — if payload changes, signature breaks.
+
+<span class="dim">Flow:</span>
+  User logs in → Server creates JWT → Returns to client
+  Client stores JWT → Sends in every request: Authorization: Bearer &lt;token&gt;
+  Server verifies signature → If valid, trusts the claims → No DB lookup needed
+  <span class="good">Stateless auth — scales perfectly with horizontal scaling</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label">OAuth 2.0 — Delegated Authorization Flow</div>
+        <pre>
+"Login with Google" uses OAuth 2.0:
+
+  <span class="lbl">1.</span> User clicks "Login with Google" on your app
+  <span class="lbl">2.</span> Your app redirects to Google's auth server
+  <span class="lbl">3.</span> User logs in to Google, approves permissions
+  <span class="lbl">4.</span> Google redirects back with an <span class="kw">Authorization Code</span>
+  <span class="lbl">5.</span> Your backend exchanges code for <span class="kw">Access Token</span> + <span class="kw">Refresh Token</span>
+  <span class="lbl">6.</span> Access token used to call Google APIs on user's behalf
+
+<span class="dim">Access Token:  short-lived (15 min) — used for API calls
+Refresh Token: long-lived (30 days) — used to get new access tokens silently</span>
+
+<span class="good">Key insight:</span> Your app NEVER sees the user's Google password.
+             Google handles auth. You just get a token saying "this user approved access".</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Authorization — Controlling Access</div>
+      <div class="sec-grid">
+        <div class="sec-card">
+          <div class="sec-name">RBAC — Role Based</div>
+          <p>Users assigned to roles. Roles have permissions. User → Role → Permission. Simple and widely used. Example: Admin, Editor, Viewer roles in a CMS.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-name">ABAC — Attribute Based</div>
+          <p>Permissions based on attributes of user, resource, and environment. "Users in Finance dept can read reports marked as Financial during business hours." More flexible than RBAC.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-name">ACL — Access Control List</div>
+          <p>Per-resource list of who can do what. Like file permissions: Alice has read+write, Bob has read-only, Charlie has no access. Used in Google Drive sharing.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-name">Encryption at Rest</div>
+          <p>Data is encrypted when stored on disk. Even if someone steals the hard drive, they can't read the data. AWS S3, RDS offer this transparently with AES-256.</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-name">Encryption in Transit</div>
+          <p>Data encrypted while moving between services using TLS. Prevents man-in-the-middle attacks. All internal microservice communication should use mTLS (mutual TLS — both sides verify).</p>
+        </div>
+        <div class="sec-card">
+          <div class="sec-name">Secrets Management</div>
+          <p>Never hardcode passwords or API keys in code or Docker images. Use HashiCorp Vault, AWS Secrets Manager, or Kubernetes Secrets. Rotate credentials regularly.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-purple">
+      <div class="callout-title">Zero Trust Security Model</div>
+      <p>Traditional: trust everything inside the corporate network. Zero Trust: <strong style="color:#fff;">trust nothing, verify everything</strong> — even internal service-to-service calls are authenticated and authorised. Every request, regardless of source, must prove its identity. This is the modern standard, especially for microservices architectures where services are constantly talking to each other.</p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 5: MONITORING          -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="monitoring">
+    <div class="section-num">Topic 05</div>
+    <div class="section-title">Monitoring &amp; Observability</div>
+
+    <p>In distributed systems, when things go wrong (and they will), you need to know <strong style="color:#fff;">what happened, where, and why</strong>. Observability is built on three pillars: Metrics, Logs, and Traces. Each answers a different question.</p>
+
+    <div class="code-block">
+      <div class="code-label">The Three Pillars of Observability</div>
+      <pre>
+<span class="lbl">METRICS</span>   — <span class="white">What is the system doing RIGHT NOW?</span>
+  Numbers over time: CPU 78%, 500 req/sec, p99 latency=240ms, error rate=0.1%
+  Fast to query. Great for dashboards and alerting thresholds.
+  Tools: <span class="kw">Prometheus</span> (collect) + <span class="kw">Grafana</span> (visualise)
+
+<span class="lbl">LOGS</span>      — <span class="white">What HAPPENED and WHEN?</span>
+  Timestamped text records of discrete events
+  "User 42 logged in", "Payment failed: insufficient funds", "DB query took 2.3s"
+  Tools: <span class="kw">ELK Stack</span> (Elasticsearch + Logstash + Kibana), <span class="kw">AWS CloudWatch</span>
+
+<span class="lbl">TRACES</span>    — <span class="white">HOW did a request flow through all services?</span>
+  A single user request may touch 12 microservices in 200ms
+  Distributed tracing shows the full journey with timing at each hop
+  Reveals: which service is the bottleneck, where latency is added
+  Tools: <span class="kw">Jaeger</span>, <span class="kw">Zipkin</span>, <span class="kw">AWS X-Ray</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Monitoring Stack — Tool by Tool</div>
+      <div class="monitor-grid">
+        <div class="monitor-card">
+          <div class="monitor-layer">Metrics Collection</div>
+          <div class="monitor-name">Prometheus</div>
+          <p>Scrapes metrics from services on a schedule. Stores as time-series. Has a powerful query language (PromQL). The industry standard for Kubernetes environments.</p>
+        </div>
+        <div class="monitor-card">
+          <div class="monitor-layer">Visualisation</div>
+          <div class="monitor-name">Grafana</div>
+          <p>Dashboards for Prometheus (and other sources). Build real-time charts of any metric. Alerting rules trigger PagerDuty/Slack notifications when thresholds are breached.</p>
+        </div>
+        <div class="monitor-card">
+          <div class="monitor-layer">Log Aggregation</div>
+          <div class="monitor-name">ELK Stack</div>
+          <p>Logstash collects and transforms logs. Elasticsearch indexes and stores them. Kibana provides search UI. Search across millions of log lines in milliseconds.</p>
+        </div>
+        <div class="monitor-card">
+          <div class="monitor-layer">Distributed Tracing</div>
+          <div class="monitor-name">Jaeger / Zipkin</div>
+          <p>Instruments each service to emit span data. Assembles spans into full traces. See the exact path of a slow request across 10 services with millisecond precision.</p>
+        </div>
+        <div class="monitor-card">
+          <div class="monitor-layer">Cloud Native</div>
+          <div class="monitor-name">AWS CloudWatch</div>
+          <p>AWS-native monitoring for EC2, Lambda, RDS, etc. Logs, metrics, traces, alarms in one place. First choice for AWS-centric architectures.</p>
+        </div>
+        <div class="monitor-card">
+          <div class="monitor-layer">Anomaly Detection</div>
+          <div class="monitor-name">Alerts + SLOs</div>
+          <p>SLI: what you measure (p99 latency). SLO: target value (&lt;200ms 99.9% of time). SLA: contractual promise to users. Alerts fire when SLOs are at risk of being breached.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-green">
+      <div class="callout-title">SLI / SLO / SLA — Don't Confuse Them</div>
+      <p>
+        <strong style="color:#fff;">SLI (Service Level Indicator)</strong> — the metric you measure. e.g. "% of requests with latency &lt; 200ms"<br><br>
+        <strong style="color:#fff;">SLO (Service Level Objective)</strong> — the target you set internally. e.g. "SLI must be ≥ 99.9% over 30 days". This is your internal reliability goal.<br><br>
+        <strong style="color:#fff;">SLA (Service Level Agreement)</strong> — the contractual promise to paying customers. e.g. "We guarantee 99.9% uptime or we issue credits." Your SLO must be stricter than your SLA — you can't keep an SLA you're not internally targeting.
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 6: TRADE-OFFS REF      -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="tradeoffs">
+    <div class="section-num">Topic 06</div>
+    <div class="section-title">System Design Trade-offs Master Reference</div>
+
+    <p>In any system design interview, there is no single right answer. Every decision trades one property for another. This is your master reference — know these cold.</p>
+
+    <div class="tradeoff-header">
+      <span>Decision</span>
+      <span style="color:var(--accent1-light);">Choose A when...</span>
+      <span style="color:var(--accent2);">Choose B when...</span>
+    </div>
+
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">SQL vs NoSQL</div>
+      <div class="tradeoff-a">Data is relational, need ACID transactions, schema is stable. (Payments, orders, inventory)</div>
+      <div class="tradeoff-b">Need massive scale, flexible schema, high write throughput. (Feeds, logs, user activity)</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Consistency vs Availability</div>
+      <div class="tradeoff-a">Data must always be correct — stale is worse than unavailable. (Bank balance, stock count)</div>
+      <div class="tradeoff-b">System must always respond — slightly stale is better than error. (Social feed, notifications)</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Monolith vs Microservices</div>
+      <div class="tradeoff-a">Early stage, small team (&lt;10 engineers), moving fast, simple domain.</div>
+      <div class="tradeoff-b">Large team (20+), independent scaling needs, multiple distinct domains, high deployment frequency.</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Push vs Pull (Fan-out)</div>
+      <div class="tradeoff-a">Most users have modest follower counts, read speed is critical. (Pre-build feeds)</div>
+      <div class="tradeoff-b">High celebrity/influencer ratio, write amplification is too expensive. (Compute feed on read)</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Sync vs Async</div>
+      <div class="tradeoff-a">Caller needs the result immediately to continue. (Search results, login, payment confirmation)</div>
+      <div class="tradeoff-b">Task can happen in background. (Send email, resize image, update feed, push notification)</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Strong vs Eventual Consistency</div>
+      <div class="tradeoff-a">Every read must see the latest write. Accept higher latency for correctness.</div>
+      <div class="tradeoff-b">Can tolerate brief staleness for lower latency and higher availability at scale.</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Serverless vs Serverful</div>
+      <div class="tradeoff-a">Spiky, infrequent workloads. Want zero ops overhead. Short-running functions.</div>
+      <div class="tradeoff-b">Sustained high traffic. Long-running processes. Need fine-grained control or lower per-request cost.</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Cache Write-Through vs Write-Back</div>
+      <div class="tradeoff-a">Data consistency is critical. Can absorb slower write latency.</div>
+      <div class="tradeoff-b">Write speed is paramount. Can tolerate small window of potential data loss.</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Normalisation vs Denormalisation</div>
+      <div class="tradeoff-a">Write-heavy system. Storage efficiency matters. Data integrity critical. (Transactions)</div>
+      <div class="tradeoff-b">Read-heavy system. Need fast queries without joins. (Feed, product catalog, analytics)</div>
+    </div>
+    <div class="tradeoff-row">
+      <div class="tradeoff-name">Vertical vs Horizontal Scaling</div>
+      <div class="tradeoff-a">Stateful app (hard to distribute), simple architecture, database servers (easier to scale up).</div>
+      <div class="tradeoff-b">Stateless app, need fault tolerance, high throughput at commodity cost. Web/API servers.</div>
+    </div>
+
+    <div class="callout callout-green">
+      <div class="callout-title">The Interview Formula for Every Trade-off</div>
+      <p>Structure every trade-off answer as: <em style="color:#d1fae5;">"I'll choose [X] over [Y] because our system's primary constraint is [requirement]. The trade-off is [what we sacrifice], which is acceptable because [why it doesn't matter for our use case]."</em><br><br>
+      This shows the interviewer you understand there's no free lunch — you're making a deliberate, justified choice, not guessing.</p>
+    </div>
+  </div>
+
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="gr-label">Key Takeaway — Phase 04</div>
+    <p>Advanced HLD is not about more components.<br>
+    It's about knowing <span style="color:var(--accent1-light);">when things fail</span>,<br>
+    <span style="color:var(--accent4-light);">how to contain the blast radius</span>,<br>
+    and <span style="color:var(--accent5-light);">how to justify every choice</span> under cross-examination.</p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-row">
+    <a class="nav-btn" href="phase-03-hld-core.html">← Phase 03: HLD Core</a>
+    <a class="nav-btn" href="phase-05-lld.html">Phase 05: LLD & Design Patterns →</a>
+  </div>
+
+</div>
+</body>
+</html>

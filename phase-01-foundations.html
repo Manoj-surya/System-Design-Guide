@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 01 — Foundations & Prerequisites</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --accent1: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --light: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 28px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 60px;
+    animation: fadeDown 0.7s ease forwards;
+  }
+
+  .breadcrumb {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .breadcrumb span { color: var(--accent1); }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 20%, var(--accent1) 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .badge-cyan { background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); color: var(--accent1); }
+  .badge-purple { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); color: #a78bfa; }
+  .badge-amber { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--accent3); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 24px 28px;
+    margin-bottom: 56px;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+    opacity: 0;
+  }
+
+  .toc-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 14px;
+  }
+
+  .toc-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px 24px;
+  }
+
+  .toc-list li a {
+    font-size: 12px;
+    color: var(--light);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .toc-list li a:hover { color: var(--accent1); }
+
+  .toc-list li a::before {
+    content: '→';
+    color: var(--accent1);
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 72px;
+    animation: fadeUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.15s; }
+  .section:nth-child(2) { animation-delay: 0.25s; }
+  .section:nth-child(3) { animation-delay: 0.35s; }
+  .section:nth-child(4) { animation-delay: 0.45s; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Sub-section ── */
+  .subsection {
+    margin-top: 40px;
+  }
+
+  .subsection-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent1);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .subsection-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent1);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--light);
+    margin-bottom: 14px;
+    line-height: 1.8;
+  }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 20px 22px;
+    margin: 16px 0;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+
+  pre {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #a5f3fc;
+    line-height: 1.7;
+    white-space: pre;
+  }
+
+  pre .comment { color: #475569; }
+  pre .keyword { color: #a78bfa; }
+  pre .string  { color: #86efac; }
+  pre .arrow   { color: var(--accent1); }
+  pre .label   { color: var(--accent3); }
+  pre .dim     { color: #475569; }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead tr {
+    background: #0d0d14;
+    border-bottom: 2px solid var(--accent2);
+  }
+
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 10px 16px;
+    color: var(--light);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  tbody td:first-child {
+    color: var(--accent1);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    padding: 18px 22px;
+    margin: 20px 0;
+    border-radius: 2px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .callout-cyan {
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-left: 3px solid var(--accent1);
+  }
+
+  .callout-amber {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-left: 3px solid var(--accent3);
+  }
+
+  .callout-green {
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-left: 3px solid var(--accent4);
+  }
+
+  .callout-red {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-left: 3px solid var(--accent5);
+  }
+
+  .callout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .callout-cyan .callout-title  { color: var(--accent1); }
+  .callout-amber .callout-title { color: var(--accent3); }
+  .callout-green .callout-title { color: var(--accent4); }
+  .callout-red .callout-title   { color: var(--accent5); }
+
+  .callout p { color: var(--light); margin: 0; font-size: 12px; }
+
+  /* ── Key point cards ── */
+  .key-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .key-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    transition: transform 0.2s;
+  }
+
+  .key-card:hover { transform: translateY(-2px); }
+
+  .key-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .key-card p {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* ── Summary ── */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(124,58,237,0.08));
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 28px 32px;
+    margin-top: 64px;
+    text-align: center;
+    animation: fadeUp 0.6s ease 0.5s forwards;
+    opacity: 0;
+  }
+
+  .golden-rule-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 12px;
+  }
+
+  .golden-rule p {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .nav-next {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 48px;
+  }
+
+  .nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent1);
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .nav-btn:hover {
+    background: rgba(0,229,255,0.05);
+    border-color: var(--accent1);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 600px) {
+    .key-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+    .section-title { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 01</span></div>
+    <h1>Foundations &amp;<br>Prerequisites</h1>
+    <div class="header-meta">
+      <span class="badge badge-cyan">Week 1 – 2</span>
+      <span class="badge badge-purple">4 Core Topics</span>
+      <span class="badge badge-amber">HLD Prerequisite</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#internet">How the Internet Works</a></li>
+      <li><a href="#dns">DNS Resolution</a></li>
+      <li><a href="#tcp">TCP vs UDP</a></li>
+      <li><a href="#http">HTTP Versions</a></li>
+      <li><a href="#tls">HTTPS & TLS</a></li>
+      <li><a href="#threads">Threads & Processes</a></li>
+      <li><a href="#sync">Sync vs Async & Event Loop</a></li>
+      <li><a href="#serverless">Serverless vs Serverful</a></li>
+      <li><a href="#scaling">Vertical vs Horizontal Scaling</a></li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 1: HOW THE INTERNET WORKS           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="internet">
+    <div class="section-label">Topic 01</div>
+    <div class="section-title">How the Internet Works</div>
+
+    <!-- DNS -->
+    <div class="subsection" id="dns">
+      <div class="subsection-title">DNS Resolution</div>
+      <p>DNS (Domain Name System) is the internet's phonebook. When you type <code style="color:var(--accent1);font-size:12px;">google.com</code>, your computer has no idea what IP address that maps to. DNS resolves the domain name into an IP address step by step.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">DNS Resolution Flow</div>
+        <pre>
+<span class="label">Step 1.</span>  Browser cache → does it already know this domain?
+<span class="label">Step 2.</span>  OS cache / /etc/hosts file
+<span class="label">Step 3.</span>  Query sent to <span class="keyword">Recursive Resolver</span> (usually your ISP)
+<span class="label">Step 4.</span>  Resolver asks <span class="keyword">Root DNS Server</span>  →  "Who handles .com?"
+<span class="label">Step 5.</span>  Root says   →  "Ask the .com TLD nameserver"
+<span class="label">Step 6.</span>  TLD says    →  "Ask google.com's own nameserver"
+<span class="label">Step 7.</span>  google.com nameserver returns IP: <span class="string">142.250.80.46</span>
+<span class="label">Step 8.</span>  Browser connects to that IP directly</pre>
+      </div>
+
+      <div class="callout callout-cyan">
+        <div class="callout-title">System Design Relevance</div>
+        <p>DNS can act as a basic load balancer. By returning different IP addresses for the same domain (DNS Round Robin), you can distribute traffic across multiple servers without a dedicated load balancer. This is how large sites handle initial request distribution across data centers globally.</p>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">TTL — Time To Live</div>
+        <p>Each DNS record has a TTL (e.g. 300 seconds). Results are cached at every step for that duration. This is why DNS changes can take time to propagate globally — old records are cached everywhere until TTL expires.</p>
+      </div>
+    </div>
+
+    <!-- Request-Response -->
+    <div class="subsection">
+      <div class="subsection-title">Request-Response Cycle</div>
+      <p>Every interaction on the web is a client-initiated request followed by a server response. The server <strong style="color:#fff;">never pushes data</strong> unless you use WebSockets or SSE (covered in Phase 3).</p>
+
+      <div class="code-block">
+        <div class="code-block-label">HTTP Request / Response Structure</div>
+        <pre>
+<span class="keyword">REQUEST</span>  (Client → Server)
+  ├─ Method:   GET / POST / PUT / DELETE
+  ├─ URL:      /api/users/123
+  ├─ Headers:  Content-Type, Authorization, ...
+  └─ Body:     { "name": "Alice" }   <span class="dim">(for POST/PUT)</span>
+
+<span class="keyword">RESPONSE</span> (Server → Client)
+  ├─ Status:   200 OK / 404 Not Found / 500 Error
+  ├─ Headers:  Content-Type, Cache-Control, ...
+  └─ Body:     { "id": 123, "name": "Alice" }</pre>
+      </div>
+    </div>
+
+    <!-- TCP vs UDP -->
+    <div class="subsection" id="tcp">
+      <div class="subsection-title">TCP vs UDP</div>
+      <p>These are the two core <strong style="color:#fff;">transport layer protocols</strong> — the rules governing how packets of data travel between machines across a network.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>TCP</th>
+              <th>UDP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Full Name</td><td>Transmission Control Protocol</td><td>User Datagram Protocol</td></tr>
+            <tr><td>Connection</td><td>Connection-oriented (handshake required)</td><td>Connectionless (fire and forget)</td></tr>
+            <tr><td>Reliability</td><td>Guaranteed delivery, ordered packets</td><td>No guarantee, packets can drop</td></tr>
+            <tr><td>Speed</td><td>Slower — overhead of ACKs & retransmits</td><td>Faster — minimal overhead</td></tr>
+            <tr><td>Error Checking</td><td>Yes — retransmits lost packets</td><td>Minimal checksum only</td></tr>
+            <tr><td>Use Cases</td><td>HTTP, emails, file transfer, banking</td><td>Video calls, live streaming, gaming, DNS</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">TCP 3-Way Handshake</div>
+        <pre>
+Client  <span class="arrow">──── SYN ────────────►</span>  Server   <span class="dim">"I want to connect"</span>
+Client  <span class="arrow">◄─── SYN-ACK ────────</span>  Server   <span class="dim">"OK, I acknowledge you"</span>
+Client  <span class="arrow">──── ACK ────────────►</span>  Server   <span class="dim">"Great, we're connected!"</span>
+                                           <span class="keyword">← Data flows now →</span></pre>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">Why UDP for Video Calls?</div>
+        <p>If one video frame drops during a call, you don't want TCP to pause everything, retransmit that frame, and resume — the moment has passed. A brief visual glitch is far better than a frozen call. With UDP, latency matters more than perfection. This is why WhatsApp calls, Zoom, and gaming all use UDP.</p>
+      </div>
+    </div>
+
+    <!-- HTTP Versions -->
+    <div class="subsection" id="http">
+      <div class="subsection-title">HTTP Versions — 1.1 vs 2 vs 3</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Version</th><th>Key Feature</th><th>Problem it Solved</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HTTP/1.1</td>
+              <td>Persistent connections (keep-alive)</td>
+              <td>Previously every request opened & closed a new TCP connection</td>
+            </tr>
+            <tr>
+              <td>HTTP/2</td>
+              <td>Multiplexing — multiple requests over one TCP connection simultaneously</td>
+              <td>HTTP/1.1 head-of-line blocking: requests queued, each waits for previous</td>
+            </tr>
+            <tr>
+              <td>HTTP/3</td>
+              <td>Runs over QUIC (UDP-based protocol) instead of TCP</td>
+              <td>TCP's transport-layer head-of-line blocking; faster on lossy/mobile networks</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">HTTP/1.1 vs HTTP/2 — Visual Difference</div>
+        <pre>
+<span class="label">HTTP/1.1</span>  — requests queue up, each waits:
+  Req 1  <span class="arrow">──────────────────►</span>  Res 1
+                                       Req 2  <span class="arrow">────►</span>  Res 2  <span class="dim">← had to wait</span>
+
+<span class="label">HTTP/2</span>   — all requests fly simultaneously on ONE connection:
+  Req 1  <span class="arrow">──►</span>
+  Req 2  <span class="arrow">──►</span>  <span class="keyword">same TCP connection</span>
+  Req 3  <span class="arrow">──►</span>
+  
+<span class="label">HTTP/3</span>   — uses QUIC over UDP, no TCP head-of-line blocking at all:
+  <span class="dim">Even if one packet drops, other streams unaffected</span></pre>
+      </div>
+    </div>
+
+    <!-- TLS -->
+    <div class="subsection" id="tls">
+      <div class="subsection-title">HTTPS & TLS Handshake</div>
+      <p>HTTPS = HTTP + TLS (Transport Layer Security). TLS encrypts all communication so nobody in the middle (man-in-the-middle attack) can read or tamper with the data.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">TLS Handshake Flow</div>
+        <pre>
+<span class="label">1.</span> Client  →  "Hello! I support these encryption methods: AES-256, ..."
+<span class="label">2.</span> Server  →  "Use AES-256. Here's my SSL Certificate (public key inside)"
+<span class="label">3.</span> Client  →  Verifies certificate with a <span class="keyword">Certificate Authority (CA)</span>
+<span class="label">4.</span> Client  →  Generates a session key, encrypts with server's public key, sends it
+<span class="label">5.</span> Server  →  Decrypts with its private key — both now share the session key
+<span class="label">6.</span>          <span class="string">All further data is encrypted with this shared session key</span></pre>
+      </div>
+
+      <div class="key-grid">
+        <div class="key-card">
+          <div class="key-card-title">Asymmetric Encryption</div>
+          <p>Used only during handshake. Public key encrypts, private key decrypts. Secure but computationally slow. Examples: RSA, ECC.</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-title">Symmetric Encryption</div>
+          <p>Used for actual data transfer. Both sides share the same key. Much faster. Examples: AES-256, ChaCha20.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 2: THREADS & CONCURRENCY            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="threads">
+    <div class="section-label">Topic 02</div>
+    <div class="section-title">Threads, Processes &amp; Concurrency</div>
+
+    <div class="subsection">
+      <div class="subsection-title">Processes vs Threads</div>
+
+      <div class="code-block">
+        <div class="code-block-label">Mental Model</div>
+        <pre>
+<span class="keyword">Process</span>  =  A running program with its OWN memory space
+           e.g. Chrome.exe, node.exe, python.exe
+
+<span class="keyword">Thread</span>   =  A unit of execution INSIDE a process
+           Shares memory with other threads in the same process
+           Lighter and cheaper to create than a process</pre>
+      </div>
+
+      <div class="callout callout-cyan">
+        <div class="callout-title">Restaurant Analogy</div>
+        <p><strong style="color:#fff;">Process</strong> = the entire restaurant (its own building, kitchen, address, resources). <strong style="color:#fff;">Thread</strong> = individual waiters working inside that restaurant, all sharing the same kitchen. One restaurant can have many waiters. Waiters are fast to hire/fire compared to opening a new restaurant.</p>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">The Shared Memory Problem</div>
+        <p>Because threads share memory, if two threads try to read and write the same variable at the same time, you get a <strong style="color:#fff;">race condition</strong> — unpredictable, buggy behaviour. This is why thread safety, locks, and synchronisation matter (covered in Phase 5 LLD).</p>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Context Switching</div>
+      <p>A CPU core can only execute one thread at a time. To simulate running many threads simultaneously, the OS rapidly switches between them — saving and restoring each thread's state. This is called a <strong style="color:#fff;">context switch</strong>.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Context Switching Flow</div>
+        <pre>
+Thread A runs  <span class="arrow">──── 10ms ────►</span>  OS saves A's state (registers, stack pointer)
+Thread B runs  <span class="arrow">──── 10ms ────►</span>  OS saves B's state
+Thread A runs  <span class="arrow">──── 10ms ────►</span>  OS restores A's saved state, resumes
+
+<span class="dim">Every save/restore = overhead.
+Too many threads → too much context switching → performance collapses.</span>
+<span class="dim">This is why Node.js uses ONE thread with an event loop instead of one thread per request.</span></pre>
+      </div>
+    </div>
+
+    <div class="subsection" id="sync">
+      <div class="subsection-title">Synchronous vs Asynchronous</div>
+
+      <div class="code-block">
+        <div class="code-block-label">Synchronous (Blocking)</div>
+        <pre>
+Thread is BLOCKED while waiting for I/O — doing nothing useful:
+
+Task 1: Read file from disk  <span class="arrow">────────────────────►</span> done
+Task 2:                      <span class="dim">← waiting... waiting...</span>     ► starts now
+
+<span class="dim">Thread sits idle for hundreds of milliseconds waiting for disk.
+Terrible for servers handling thousands of requests.</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Asynchronous (Non-Blocking)</div>
+        <pre>
+Thread registers a callback and moves on immediately:
+
+Task 1: Read file   <span class="arrow">──►</span>  <span class="dim">(delegate to OS, register callback)</span>  <span class="arrow">──►</span>  callback fires when done
+Task 2:             <span class="arrow">──────────────────────────────────────────►</span>  done (started immediately!)
+
+<span class="dim">Thread stays free to handle other work. This is how Node.js serves
+10,000 concurrent connections with a single thread.</span></pre>
+      </div>
+
+      <div class="subsection-title" style="margin-top:28px;">The Event Loop (Node.js model)</div>
+      <p>Node.js uses a single-threaded event loop for async I/O. Understanding this helps you understand why blocking the event loop with heavy computation is catastrophic.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Event Loop Architecture</div>
+        <pre>
+         ┌──────────────────────────────┐
+         │         Call Stack           │  <span class="dim">← executes sync code top-to-bottom</span>
+         └──────────────┬───────────────┘
+                        │ empty?
+         ┌──────────────▼───────────────┐
+         │          Event Loop          │  <span class="dim">← watches: is call stack empty?</span>
+         └──────────────┬───────────────┘
+                        │ yes → pick next callback
+         ┌──────────────▼───────────────┐
+         │        Callback Queue        │  <span class="dim">← finished async ops wait here</span>
+         └──────────────────────────────┘
+
+<span class="label">Example:</span>
+  <span class="keyword">setTimeout</span>(() => console.log("B"), 0)    <span class="dim">// goes to callback queue</span>
+  console.log("A")                           <span class="dim">// runs immediately on stack</span>
+  <span class="string">// Output: A  then  B</span>                    <span class="dim">// even with 0ms delay</span></pre>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">Critical Gotcha</div>
+        <p>If you run a heavy CPU computation synchronously in Node.js (like sorting a million items), it blocks the entire event loop. No other requests can be handled until it finishes. This is why CPU-heavy work should be offloaded to worker threads or a separate service.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 3: SERVERLESS VS SERVERFUL          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="serverless">
+    <div class="section-label">Topic 03</div>
+    <div class="section-title">Serverless vs Serverful</div>
+
+    <div class="key-grid">
+      <div class="key-card">
+        <div class="key-card-title" style="color:var(--accent1);">Serverful — AWS EC2</div>
+        <p>You rent a virtual machine. You control the OS, runtime, dependencies, and scaling rules. Pay 24/7 whether traffic exists or not. Full control, full responsibility.</p>
+      </div>
+      <div class="key-card">
+        <div class="key-card-title" style="color:var(--accent2);">Serverless — AWS Lambda</div>
+        <p>Upload just your function. AWS handles the server, OS, scaling, and patching. Pay only per invocation — scales to zero. Cold start latency on first call.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-label">Trade-off Comparison</div>
+      <pre>
+                    <span class="keyword">SERVERFUL (EC2)</span>         <span class="keyword">SERVERLESS (Lambda)</span>
+Control         ──  Full (OS, runtime)       None (managed by AWS)
+Cost model      ──  Pay 24/7                 Pay per invocation
+Scaling         ──  Manual / auto-scaling    Automatic (instant)
+Cold starts     ──  None                     Yes (first call slow)
+Long processes  ──  ✓ Unlimited              ✗ Max 15 min timeout
+Vendor lock-in  ──  Low                      High
+Ideal for       ──  Sustained high traffic   Spiky / infrequent tasks</pre>
+    </div>
+
+    <div class="callout callout-cyan">
+      <div class="callout-title">When to Use Each — System Design Context</div>
+      <p><strong style="color:#fff;">Serverful:</strong> Netflix's main video streaming servers — constant high traffic, long-running processes, cost-effective at scale.<br><br>
+      <strong style="color:#fff;">Serverless:</strong> Resize a thumbnail when a user uploads a photo on Instagram, send a welcome email after signup, process a webhook. Infrequent, short, event-triggered tasks.</p>
+    </div>
+
+    <div class="callout callout-amber">
+      <div class="callout-title">The Cold Start Problem</div>
+      <p>When a Lambda function hasn't been called recently, AWS needs to spin up a new container for it. This first invocation can take 100ms–2s extra. For latency-sensitive applications (like real-time APIs), this is a significant trade-off. Solutions: provisioned concurrency (keep containers warm, but costs more), or just use serverful for latency-critical paths.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SECTION 4: VERTICAL VS HORIZONTAL SCALING  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="scaling">
+    <div class="section-label">Topic 04</div>
+    <div class="section-title">Vertical vs Horizontal Scaling</div>
+
+    <div class="subsection">
+      <div class="subsection-title">Vertical Scaling (Scale Up)</div>
+      <p>Add more power to the <strong style="color:#fff;">same single machine</strong> — more CPU cores, more RAM, faster storage.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Vertical Scaling</div>
+        <pre>
+<span class="dim">Start:</span>   Server  [4 CPU · 8GB RAM · 100GB SSD]
+           ↓ upgrade the same machine
+<span class="string">After:</span>   Server  [32 CPU · 256GB RAM · 2TB SSD]
+
+<span class="label">Pros:</span>  Simple. No code changes. No distributed complexity.
+<span class="label">Cons:</span>  Hard limit exists. Single point of failure.
+       Requires downtime to upgrade. Very expensive at top end.</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Horizontal Scaling (Scale Out)</div>
+      <p>Add <strong style="color:#fff;">more machines</strong> and distribute load between them using a load balancer.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Horizontal Scaling</div>
+        <pre>
+                   ┌──────────────────┐
+                   │   Load Balancer  │
+                   └──────┬───────────┘
+              ┌───────────┼───────────┐
+              ▼           ▼           ▼
+          Server 1    Server 2    Server 3
+         [4C·8GB]    [4C·8GB]    [4C·8GB]
+
+<span class="label">Pros:</span>  No theoretical limit. Fault tolerant.
+       Cheaper commodity hardware. Zero-downtime scaling.
+<span class="label">Cons:</span>  Requires <span class="keyword">stateless</span> app design.
+       Distributed systems complexity. Needs a load balancer.</pre>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">The Stateless Requirement — Critical Concept</div>
+        <p>For horizontal scaling to work, <strong style="color:#fff;">any server must be able to handle any request</strong>. This means a server cannot store session data in its own memory — because the next request from the same user might hit a different server.<br><br>
+        Solution: Store shared state in an external store like <strong style="color:#fff;">Redis</strong> that all servers can access. This is why almost every horizontally-scaled system uses Redis for sessions and caching.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Factor</th><th>Vertical Scaling</th><th>Horizontal Scaling</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Complexity</td><td>Simple</td><td>Complex (distributed systems)</td></tr>
+            <tr><td>Limit</td><td>Hardware ceiling</td><td>Theoretically unlimited</td></tr>
+            <tr><td>Fault tolerance</td><td>None (SPOF)</td><td>High (redundancy built-in)</td></tr>
+            <tr><td>Cost at scale</td><td>Very expensive</td><td>Cost-effective (commodity)</td></tr>
+            <tr><td>Downtime to scale</td><td>Yes (restart required)</td><td>No (add servers live)</td></tr>
+            <tr><td>Used by</td><td>Small apps, databases</td><td>Netflix, Twitter, WhatsApp</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title">Real World: WhatsApp Architecture</div>
+        <p>WhatsApp handled 900 million users with only ~50 engineers — largely because they used horizontal scaling with Erlang, which can run millions of lightweight processes on one machine, and then scaled out horizontally across thousands of servers. Each server is stateless; presence and session data lives in a shared registry.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="golden-rule-label">Key Takeaway — Phase 01</div>
+    <p>Everything in system design traces back to these fundamentals.<br>
+    When you see a design decision — UDP for video, CDN for content, microservices for scale —<br>
+    it always connects back to: <span style="color:var(--accent1);">how data moves</span>, <span style="color:var(--accent2);">how processes work</span>, and <span style="color:var(--accent3);">how systems scale</span>.</p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-next">
+    <a class="nav-btn" href="phase-02-databases.html">
+      Next: Phase 02 — Databases &amp; CAP Theorem →
+    </a>
+  </div>
+
+</div>
+</body>
+</html>

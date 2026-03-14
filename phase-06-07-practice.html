@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 06 & 07 — Practice Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080f;
+    --surface: #0e0f1a;
+    --surface2: #131420;
+    --border: #1e2035;
+    --a1: #6ee7b7;   /* emerald */
+    --a2: #fbbf24;   /* amber */
+    --a3: #60a5fa;   /* blue */
+    --a4: #f472b6;   /* pink */
+    --a5: #a78bfa;   /* violet */
+    --a6: #34d399;   /* green */
+    --a7: #fb7185;   /* red */
+    --a8: #38bdf8;   /* sky */
+    --text: #e2e8f0;
+    --muted: #3d4060;
+    --light: #8892aa;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  /* Deep space grain */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 100% 60% at 10% 0%, rgba(110,231,183,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 50% at 90% 100%, rgba(96,165,250,0.03) 0%, transparent 50%);
+    pointer-events:none; z-index:0;
+  }
+
+  .container {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 52px 28px 120px;
+    position:relative; z-index:1;
+  }
+
+  /* ── Header ── */
+  header { margin-bottom:60px; animation: fadeDown 0.7s ease forwards; }
+
+  .breadcrumb { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:16px; }
+  .breadcrumb span { color:var(--a1); }
+
+  h1 {
+    font-family:'Clash Display', sans-serif;
+    font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+    font-weight:700; line-height:1.08;
+    background: linear-gradient(135deg, #fff 0%, var(--a1) 45%, var(--a3) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:18px;
+  }
+
+  .header-meta { display:flex; gap:10px; flex-wrap:wrap; }
+  .badge { font-size:9px; letter-spacing:2px; padding:4px 11px; border-radius:2px; text-transform:uppercase; }
+  .b1 { background:rgba(110,231,183,0.1); border:1px solid rgba(110,231,183,0.3); color:var(--a1); }
+  .b2 { background:rgba(251,191,36,0.1);  border:1px solid rgba(251,191,36,0.3);  color:var(--a2); }
+  .b3 { background:rgba(96,165,250,0.1);  border:1px solid rgba(96,165,250,0.3);  color:var(--a3); }
+  .b4 { background:rgba(244,114,182,0.1); border:1px solid rgba(244,114,182,0.3); color:var(--a4); }
+
+  /* ── Phase divider ── */
+  .phase-divider {
+    display:flex; align-items:center; gap:16px;
+    margin: 0 0 44px;
+  }
+  .phase-tag {
+    font-family:'Clash Display', sans-serif;
+    font-size:0.75rem; letter-spacing:3px; text-transform:uppercase;
+    padding:6px 16px; border:1px solid var(--pd-color);
+    color:var(--pd-color); white-space:nowrap;
+  }
+  .phase-line { flex:1; height:1px; background: linear-gradient(to right, var(--pd-color), transparent); opacity:0.3; }
+  .phase-desc { font-size:11px; color:var(--muted); white-space:nowrap; }
+
+  /* ── System cards ── */
+  .systems-list { display:flex; flex-direction:column; gap:56px; }
+
+  .system {
+    animation: fadeUp 0.6s ease forwards; opacity:0;
+  }
+  .system:nth-child(1)  { animation-delay:0.08s; }
+  .system:nth-child(2)  { animation-delay:0.14s; }
+  .system:nth-child(3)  { animation-delay:0.20s; }
+  .system:nth-child(4)  { animation-delay:0.26s; }
+  .system:nth-child(5)  { animation-delay:0.32s; }
+  .system:nth-child(6)  { animation-delay:0.38s; }
+  .system:nth-child(7)  { animation-delay:0.44s; }
+  .system:nth-child(8)  { animation-delay:0.50s; }
+  .system:nth-child(9)  { animation-delay:0.56s; }
+  .system:nth-child(10) { animation-delay:0.62s; }
+
+  .sys-header {
+    display:flex; align-items:baseline; gap:16px;
+    margin-bottom:16px; flex-wrap:wrap;
+  }
+  .sys-name {
+    font-family:'Clash Display', sans-serif;
+    font-size:1.6rem; font-weight:700; color:#fff;
+  }
+  .sys-type {
+    font-size:9px; letter-spacing:2px; text-transform:uppercase;
+    padding:3px 10px; border-radius:2px;
+    background:rgba(110,231,183,0.08); border:1px solid rgba(110,231,183,0.2);
+    color:var(--a1);
+  }
+  .sys-diff {
+    font-size:9px; letter-spacing:1px; text-transform:uppercase;
+    padding:3px 10px; border-radius:2px;
+    margin-left:auto;
+  }
+  .diff-med  { background:rgba(251,191,36,0.08);  border:1px solid rgba(251,191,36,0.2);  color:var(--a2); }
+  .diff-hard { background:rgba(244,114,182,0.08); border:1px solid rgba(244,114,182,0.2); color:var(--a4); }
+  .diff-easy { background:rgba(52,211,153,0.08);  border:1px solid rgba(52,211,153,0.2);  color:var(--a6); }
+
+  /* tabs */
+  .tabs { display:flex; gap:0; margin-bottom:0; border-bottom:1px solid var(--border); }
+  .tab-btn {
+    font-family:'Fira Code', monospace; font-size:10px; letter-spacing:1.5px;
+    text-transform:uppercase; padding:8px 16px; border:none;
+    background:transparent; color:var(--muted); cursor:pointer;
+    border-bottom:2px solid transparent; transition:all 0.2s;
+    margin-bottom:-1px;
+  }
+  .tab-btn.active { color:var(--a1); border-bottom-color:var(--a1); }
+  .tab-btn:hover:not(.active) { color:var(--light); }
+
+  .tab-content { display:none; padding:20px 0 0; }
+  .tab-content.active { display:block; }
+
+  /* req rows */
+  .req-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;
+  }
+  .req-box {
+    background:var(--surface); border:1px solid var(--border);
+    padding:14px 16px; border-top:2px solid var(--rb-color);
+  }
+  .req-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--rb-color); margin-bottom:8px; }
+  .req-box ul { list-style:none; }
+  .req-box ul li {
+    font-size:11px; color:var(--light); padding:2px 0 2px 12px;
+    position:relative; line-height:1.6;
+  }
+  .req-box ul li::before { content:'▸'; position:absolute; left:0; color:var(--rb-color); font-size:9px; top:4px; }
+
+  /* arch diagram */
+  .arch-block {
+    background:#060810; border:1px solid var(--border);
+    border-left:3px solid var(--a1);
+    padding:18px 20px; margin:12px 0; overflow-x:auto;
+  }
+  .arch-label { font-size:8px; letter-spacing:2.5px; text-transform:uppercase; color:var(--a1); margin-bottom:8px; opacity:0.75; }
+  pre {
+    font-family:'Fira Code', monospace; font-size:11px;
+    color:#a7f3d0; line-height:1.8; white-space:pre;
+  }
+  pre .dim  { color:#222840; }
+  pre .kw   { color:#93c5fd; }
+  pre .str  { color:#86efac; }
+  pre .lbl  { color:#fcd34d; }
+  pre .good { color:#6ee7b7; }
+  pre .bad  { color:#fb7185; }
+  pre .pk   { color:#f9a8d4; }
+  pre .vi   { color:#c4b5fd; }
+  pre .sky  { color:#7dd3fc; }
+  pre .org  { color:#fdba74; }
+
+  /* tech stack chips */
+  .stack-row { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+  .chip {
+    font-size:10px; letter-spacing:1px;
+    padding:3px 10px; border-radius:2px;
+    background:rgba(110,231,183,0.06);
+    border:1px solid rgba(110,231,183,0.2);
+    color:var(--a1);
+  }
+  .chip-blue   { background:rgba(96,165,250,0.06);  border-color:rgba(96,165,250,0.2);  color:var(--a3); }
+  .chip-amber  { background:rgba(251,191,36,0.06);  border-color:rgba(251,191,36,0.2);  color:var(--a2); }
+  .chip-pink   { background:rgba(244,114,182,0.06); border-color:rgba(244,114,182,0.2); color:var(--a4); }
+  .chip-violet { background:rgba(167,139,250,0.06); border-color:rgba(167,139,250,0.2); color:var(--a5); }
+
+  /* key decisions */
+  .decisions { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+  .decision {
+    background:var(--surface); border:1px solid var(--border);
+    padding:12px 16px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .dec-q { font-size:11px; color:var(--a2); flex:0 0 200px; line-height:1.5; }
+  .dec-a { font-size:11px; color:var(--light); line-height:1.6; }
+
+  /* callout */
+  .note {
+    padding:14px 18px; margin:14px 0;
+    font-size:11.5px; line-height:1.75;
+    background:rgba(110,231,183,0.04);
+    border:1px solid rgba(110,231,183,0.15);
+    border-left:3px solid var(--a1);
+    color:var(--light);
+  }
+  .note strong { color:#fff; }
+  .note-amber {
+    background:rgba(251,191,36,0.04);
+    border-color:rgba(251,191,36,0.15);
+    border-left-color:var(--a2);
+  }
+  .note-blue {
+    background:rgba(96,165,250,0.04);
+    border-color:rgba(96,165,250,0.15);
+    border-left-color:var(--a3);
+  }
+  .note-pink {
+    background:rgba(244,114,182,0.04);
+    border-color:rgba(244,114,182,0.15);
+    border-left-color:var(--a4);
+  }
+
+  /* ── LLD problem cards ── */
+  .lld-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));
+    gap:20px; margin-top:24px;
+  }
+  .lld-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-top:3px solid var(--lc, var(--a1));
+    animation: fadeUp 0.6s ease forwards; opacity:0;
+  }
+  .lld-card:nth-child(1)  { animation-delay:0.10s; }
+  .lld-card:nth-child(2)  { animation-delay:0.17s; }
+  .lld-card:nth-child(3)  { animation-delay:0.24s; }
+  .lld-card:nth-child(4)  { animation-delay:0.31s; }
+  .lld-card:nth-child(5)  { animation-delay:0.38s; }
+  .lld-card:nth-child(6)  { animation-delay:0.45s; }
+  .lld-card:nth-child(7)  { animation-delay:0.52s; }
+  .lld-card:nth-child(8)  { animation-delay:0.59s; }
+  .lld-card:nth-child(9)  { animation-delay:0.66s; }
+  .lld-card:nth-child(10) { animation-delay:0.73s; }
+
+  .lld-header {
+    padding:16px 18px 12px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+  }
+  .lld-name { font-family:'Clash Display', sans-serif; font-size:1.1rem; font-weight:600; color:#fff; }
+  .lld-pattern { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--lc, var(--a1)); margin-left:auto; }
+  .lld-body { padding:16px 18px; }
+  .lld-body p { font-size:11.5px; color:var(--light); line-height:1.75; margin-bottom:12px; }
+
+  .entities-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .entity {
+    font-size:10px; padding:2px 9px; border-radius:2px;
+    background:rgba(110,231,183,0.06); border:1px solid rgba(110,231,183,0.2); color:var(--a1);
+  }
+
+  /* golden rule */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(110,231,183,0.06), rgba(96,165,250,0.04));
+    border:1px solid rgba(110,231,183,0.18);
+    padding:32px 36px; margin-top:72px; text-align:center;
+    animation: fadeUp 0.6s ease 0.7s forwards; opacity:0;
+  }
+  .gr-label { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--a1); margin-bottom:14px; }
+  .golden-rule p {
+    font-family:'Clash Display', sans-serif;
+    font-size:1.15rem; font-weight:600; color:#fff; line-height:1.65; margin:0;
+  }
+
+  .nav-row { display:flex; justify-content:space-between; margin-top:48px; gap:12px; flex-wrap:wrap; }
+  .nav-btn {
+    background:var(--surface); border:1px solid var(--border);
+    padding:12px 20px; font-family:'Fira Code', monospace; font-size:11px;
+    color:var(--a1); text-decoration:none;
+    display:flex; align-items:center; gap:8px; transition:background 0.2s;
+  }
+  .nav-btn:hover { background:rgba(110,231,183,0.05); border-color:var(--a1); }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); }
+
+  @media(max-width:700px) {
+    .req-grid { grid-template-columns:1fr; }
+    .lld-grid  { grid-template-columns:1fr; }
+    .decision  { flex-direction:column; gap:6px; }
+    .dec-q     { flex:none; }
+    h1 { font-size:2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 06 &amp; 07</span></div>
+    <h1>Practice Systems<br>HLD &amp; LLD Problems</h1>
+    <div class="header-meta">
+      <span class="badge b1">Week 13 – 16</span>
+      <span class="badge b2">10 HLD Systems</span>
+      <span class="badge b3">10 LLD Problems</span>
+      <span class="badge b4">Interview Ready</span>
+    </div>
+  </header>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- PHASE 06: HLD SYSTEMS                  -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="phase-divider" style="--pd-color:#6ee7b7;">
+    <div class="phase-tag">Phase 06</div>
+    <div class="phase-line"></div>
+    <div class="phase-desc">HLD PRACTICE — 10 REAL SYSTEMS</div>
+  </div>
+
+  <div class="systems-list">
+
+    <!-- ── 1. WhatsApp ── -->
+    <div class="system" id="whatsapp">
+      <div class="sys-header">
+        <div class="sys-name">WhatsApp</div>
+        <div class="sys-type">Messaging</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'wa')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'wa')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'wa')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>1:1 and group messaging</li>
+              <li>Message delivery receipts (1✓ 2✓ 2✓✓)</li>
+              <li>Online/offline presence status</li>
+              <li>Media sharing (images, video, audio)</li>
+              <li>End-to-end encryption</li>
+              <li>Push notifications for offline users</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>2 billion users, 100B messages/day</li>
+              <li>Low latency: &lt;500ms delivery</li>
+              <li>High availability over consistency (AP)</li>
+              <li>Messages durable — never lost</li>
+              <li>Scalable to billions of connections</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  Client App
+      │  <span class="dim">WebSocket / custom XMPP over TCP</span>
+      ▼
+  ┌─────────────────────────────────────────────┐
+  │           Edge Server (Erlang/OTP)           │  <span class="dim">← persistent connections</span>
+  │   Presence Registry ── Connection Map        │
+  └──────────────┬──────────────────────────────┘
+                 │
+    ┌────────────▼─────────────┐
+    │     Message Router       │  <span class="dim">← routes to correct edge server</span>
+    └────────────┬─────────────┘
+                 │
+    ┌────────────▼─────────────┐
+    │    Message Queue         │  <span class="dim">← Kafka: store-and-forward</span>
+    │   (offline buffer)       │
+    └────────────┬─────────────┘
+                 │
+    ┌────────────▼─────────────┐
+    │   Delivery Workers       │  <span class="dim">← fan-out, push to online users</span>
+    └────────────┬─────────────┘
+                 │
+    ┌────────────▼─────────────┐
+    │   Cassandra (messages)   │  <span class="dim">← partitioned by (user_id, timestamp)</span>
+    │   Redis (presence/cache) │
+    │   S3 (media files)       │
+    └──────────────────────────┘</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip">Erlang/OTP</span>
+          <span class="chip chip-blue">Cassandra</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-pink">Redis</span>
+          <span class="chip chip-violet">AWS S3</span>
+          <span class="chip">WebSockets/XMPP</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">Why Cassandra for messages?</div>
+            <div class="dec-a">Messages are time-series data, extremely high write throughput (100B/day). Cassandra's wide-column model, partitioned by (user_id, time), is perfect. AP — we prefer availability over strict consistency for delivery receipts.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">Why not store messages on server?</div>
+            <div class="dec-a">Messages are only stored temporarily while recipient is offline (store-and-forward). Once delivered, deleted from server. This enables E2E encryption — server only holds ciphertext transiently.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How do group messages scale?</div>
+            <div class="dec-a">Fan-out on write for small groups. For large groups (broadcast channels), use fan-out on read. Delivery workers fetch membership list and push to each online member's edge server.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How are delivery receipts done?</div>
+            <div class="dec-a">Each tick (1✓ server receipt, 2✓ device receipt, 2✓✓ read) is an ACK event published back through the system via Kafka, eventually delivered to the original sender's connection.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. YouTube ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">YouTube</div>
+        <div class="sys-type">Video Streaming</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'yt')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'yt')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'yt')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Upload videos (up to 12 hours)</li>
+              <li>Stream videos with adaptive bitrate</li>
+              <li>Search videos by title/tags</li>
+              <li>Likes, comments, subscriptions</li>
+              <li>Recommendations feed</li>
+              <li>Creator analytics dashboard</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>500 hours of video uploaded/minute</li>
+              <li>2B logged-in users/month</li>
+              <li>Read-heavy: 1000:1 read/write ratio</li>
+              <li>Low latency video start (&lt;2s)</li>
+              <li>Highly available (streaming must never drop)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">UPLOAD PATH:</span>
+  Creator → Upload Service → Raw Storage (S3)
+                                  │
+                            <span class="kw">Transcoding Workers</span>  <span class="dim">← Kafka triggered</span>
+                                  │
+                    ┌─────────────┼─────────────┐
+                  360p           720p          1080p/4K  <span class="dim">← multiple resolutions</span>
+                    └─────────────┼─────────────┘
+                                  │
+                              <span class="str">CDN Push</span>  <span class="dim">← pre-warm popular content</span>
+
+  <span class="lbl">STREAM PATH:</span>
+  Viewer → CDN Edge (nearest PoP)
+              │  HIT: serve directly (~5ms)
+              │  MISS: fetch from Origin S3, cache at edge
+              ▼
+  Adaptive Bitrate (HLS/DASH):
+    Client monitors bandwidth → switches quality segment dynamically
+    360p if slow network, 4K if fast
+
+  <span class="lbl">METADATA:</span>  PostgreSQL (video info) + Elasticsearch (search)
+  <span class="lbl">RECOMMENDATIONS:</span> ML pipeline → precomputed, stored in Redis per user</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip">AWS S3</span>
+          <span class="chip chip-blue">CDN (Akamai)</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-pink">Elasticsearch</span>
+          <span class="chip chip-violet">Redis</span>
+          <span class="chip">HLS/DASH</span>
+          <span class="chip chip-blue">PostgreSQL</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">Why transcode to multiple resolutions?</div>
+            <div class="dec-a">Adaptive Bitrate Streaming (ABR). The player segments video into small chunks (2-10s each). It monitors available bandwidth and switches quality per segment. Poor connection → 360p, great connection → 4K. Seamless experience across all networks.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How is search so fast?</div>
+            <div class="dec-a">Elasticsearch maintains an inverted index of video titles, descriptions, and tags. When a video is uploaded, metadata is async-indexed via Kafka consumer. Search queries go directly to Elasticsearch, never to the main DB.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How are view counts handled?</div>
+            <div class="dec-a">View counts are extremely write-heavy. Instead of a DB write per view, events are batched in Kafka, aggregated in a stream processor (Flink/Spark), and periodically flushed to the database. Eventual consistency is fine — 10M vs 10,000,001 views looks the same to users.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. Twitter/X ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Twitter / X</div>
+        <div class="sys-type">Social Feed</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tw')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'tw')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'tw')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Post tweets (280 chars)</li>
+              <li>Follow/unfollow users</li>
+              <li>Home timeline (following feed)</li>
+              <li>Like, retweet, reply</li>
+              <li>Search tweets and hashtags</li>
+              <li>Trending topics</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>300M active users</li>
+              <li>Read-heavy: 300K reads/sec vs 6K writes/sec</li>
+              <li>Feed must load in &lt;100ms</li>
+              <li>Eventual consistency acceptable for feeds</li>
+              <li>Celebrity accounts: 100M+ followers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture — Hybrid Fan-out</div>
+          <pre>
+  <span class="lbl">POST TWEET:</span>
+  User → Tweet Service → Tweets DB (Cassandra)
+                              │
+                         Kafka event: "new_tweet"
+                              │
+                    ┌─────────▼──────────┐
+                    │   FanOut Service   │
+                    └─────────┬──────────┘
+                              │
+          ┌───────────────────┼────────────────────┐
+          │                                        │
+    <span class="good">Regular user (&lt;100k followers)</span>          <span class="pk">Celebrity (100k+ followers)</span>
+    Push tweet_id to each                    Store tweet in Tweets DB only
+    follower's feed cache (Redis)            <span class="dim">← NOT pushed to any feed</span>
+
+  <span class="lbl">READ TIMELINE:</span>
+  User → Timeline Service
+              │
+    1. Fetch pre-built feed from <span class="kw">Redis</span>   <span class="dim">← regular followees</span>
+    2. Fetch recent tweets from       <span class="dim">← celebrity followees</span>
+       each celebrity account
+    3. <span class="str">Merge + rank</span> the two lists
+    4. Return to user  <span class="dim">(target: &lt;100ms)</span>
+
+  <span class="lbl">SEARCH:</span>  Elasticsearch with real-time tweet indexing via Kafka
+  <span class="lbl">TRENDS:</span>  Count hashtag frequency in 15-min sliding window (Redis sorted set)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-pink">Redis (feed cache)</span>
+          <span class="chip chip-blue">Cassandra (tweets)</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-violet">Elasticsearch</span>
+          <span class="chip">MySQL (users/follows)</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">The celebrity problem solution?</div>
+            <div class="dec-a">Hybrid fan-out. Regular users (&lt;~100k followers): fan-out on write — tweet IDs pushed to all followers' Redis feed caches immediately. Celebrities: fan-out on read — tweets fetched on demand and merged with pre-built feed. Threshold is configurable.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How are trends calculated?</div>
+            <div class="dec-a">Redis Sorted Set where score = hashtag frequency. Each tweet increments the hashtag score. A background job maintains a 15-minute sliding window using ZINCRBY and ZREMRANGEBYSCORE. Top N from ZREVRANGE = trending.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. Uber ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Uber</div>
+        <div class="sys-type">Ride Matching</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'ub')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'ub')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'ub')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Rider: request ride, see ETA, track driver</li>
+              <li>Driver: go online/offline, accept/reject trips</li>
+              <li>Match nearest available driver to rider</li>
+              <li>Real-time location tracking</li>
+              <li>Fare calculation (surge pricing)</li>
+              <li>Trip history and payments</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>Match in &lt;1 minute or rider cancels</li>
+              <li>Location updates every 4 seconds</li>
+              <li>Highly consistent for payments</li>
+              <li>Millions of drivers, riders globally</li>
+              <li>Geospatial queries in milliseconds</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">DRIVER LOCATION UPDATES (every 4 seconds):</span>
+  Driver App → <span class="kw">Location Service</span> → Redis GEO  <span class="dim">← geospatial index</span>
+                                          → Kafka   <span class="dim">← async to persistent store</span>
+                                          → Cassandra (trip history)
+
+  <span class="lbl">RIDE MATCHING:</span>
+  Rider requests → <span class="kw">Matching Service</span>
+                        │
+                   Query Redis GEO: GEORADIUS(rider_lat, rider_lon, 5km)
+                        │  returns: [driver1, driver2, driver3...]
+                        │
+                   Score by: distance + rating + acceptance_rate
+                        │
+                   Send trip offer to best driver (WebSocket)
+                        │
+                   driver accepts → create Trip record → notify rider
+                   driver rejects → offer to next driver (timeout: 10s)
+
+  <span class="lbl">SURGE PRICING:</span>
+  Count active requests vs available drivers in geohash cell
+  ratio &gt; threshold → multiply base fare (1.2x, 1.5x, 2x...)
+
+  <span class="lbl">PAYMENTS:</span>  Stripe + PostgreSQL (ACID critical)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-pink">Redis GEO</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-blue">Cassandra</span>
+          <span class="chip">PostgreSQL</span>
+          <span class="chip chip-violet">WebSockets</span>
+          <span class="chip">Google Maps API</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">Why Redis GEO for location?</div>
+            <div class="dec-a">Redis GEO uses geohashing internally. GEORADIUS query returns all drivers within N km in O(N+log M) time, sub-millisecond for thousands of drivers. Driver locations update every 4s — Redis handles this write volume easily. Persistent store (Cassandra) updated async via Kafka.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">What is geohashing?</div>
+            <div class="dec-a">Encodes a lat/lon pair into a short alphanumeric string. Nearby locations share the same prefix. Enables indexing geographic data in a regular key-value store or B-tree. Longer geohash = smaller area = more precision.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. Netflix ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Netflix</div>
+        <div class="sys-type">Video Streaming</div>
+        <div class="sys-diff diff-med">Medium</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'nf')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'nf')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'nf')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Browse and search content library</li>
+              <li>Stream movies/TV shows</li>
+              <li>Personalised recommendations</li>
+              <li>Multiple user profiles per account</li>
+              <li>Download for offline viewing</li>
+              <li>Resume playback across devices</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>238M subscribers, 200+ countries</li>
+              <li>15% of global internet bandwidth</li>
+              <li>Start streaming in &lt;2 seconds</li>
+              <li>Zero buffering for 99.9% of streams</li>
+              <li>Highly available — every second of downtime costs millions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">CONTENT INGESTION:</span>
+  Studio delivers master file → Encoding Farm (100+ workers)
+    ├─ 1080p, 720p, 480p, 4K HDR
+    ├─ 20+ audio tracks (languages)
+    └─ 20+ subtitle tracks
+  Encoded chunks → <span class="kw">Netflix CDN (Open Connect)</span>
+
+  <span class="lbl">STREAMING:</span>
+  User plays → Client fetches manifest (chunk list) from CDN
+  Client measures bandwidth → ABR algorithm picks quality
+  Chunks streamed from nearest CDN PoP (Open Connect Appliance)
+  Open Connect is deployed inside ISP data centres = ultra low latency
+
+  <span class="lbl">BACKEND SERVICES:</span>
+  ├─ <span class="str">API Gateway</span>     → routes to microservices
+  ├─ <span class="str">User Service</span>    → profiles, auth (MySQL)
+  ├─ <span class="str">Catalog Service</span> → content metadata (Cassandra)
+  ├─ <span class="str">Reco Service</span>    → ML models (precomputed, Redis)
+  ├─ <span class="str">Playback Service</span>→ licenses, bookmarks (Cassandra)
+  └─ <span class="str">Billing Service</span> → payments (MySQL + ACID)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-blue">Open Connect CDN</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-pink">Cassandra</span>
+          <span class="chip chip-violet">Redis</span>
+          <span class="chip">MySQL</span>
+          <span class="chip">HLS/DASH</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">What makes Netflix CDN special?</div>
+            <div class="dec-a">Netflix built their own CDN — Open Connect Appliances (OCAs) — and placed them inside ISP data centres globally for free. ISPs get free hardware, Netflix gets ultra-low latency delivery without paying third-party CDN fees at their scale. OCAs are pre-loaded with popular content.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How do recommendations work at scale?</div>
+            <div class="dec-a">ML models run in batch (offline) every few hours, consuming viewing history, ratings, and content metadata from data warehouse. Recommendations are precomputed and stored per-user in Redis. Serving recommendations = Redis GET (1ms), not a model inference call.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 6. Instagram ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Instagram</div>
+        <div class="sys-type">Photo Social</div>
+        <div class="sys-diff diff-med">Medium</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'ig')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'ig')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'ig')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Upload photos/videos</li>
+              <li>Follow/unfollow users</li>
+              <li>Home feed (chronological + ranked)</li>
+              <li>Like, comment, share, save</li>
+              <li>Stories (24h expiry)</li>
+              <li>Explore/search</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>2B monthly active users</li>
+              <li>95M photos/day uploaded</li>
+              <li>Read-heavy (feed views vs uploads)</li>
+              <li>Images served in &lt;100ms globally</li>
+              <li>Stories auto-expire after 24h</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">PHOTO UPLOAD:</span>
+  Client → Upload Service → S3 (raw image)
+                               │
+                         Kafka: "image_uploaded"
+                               │
+                    ┌──────────┼──────────┐
+                    ▼          ▼          ▼
+                 Resize      Filter     Classify  <span class="dim">← async workers</span>
+               (thumbnails)  (detect  (ML: safe/unsafe
+                              NSFW)    content)</span>
+                    └──────────┼──────────┘
+                               │
+                        CDN (CloudFront)
+
+  <span class="lbl">FEED GENERATION (hybrid):</span>
+  Normal users (&lt;5k followers):  fan-out on write → Redis feed cache
+  Celebrities (5k+ followers):   fan-out on read → merge on request
+
+  <span class="lbl">DATA MODEL:</span>
+  Posts:    Cassandra (post_id, user_id, image_url, timestamp)
+  Social:   PostgreSQL (users, follows, likes)
+  Stories:  Cassandra with TTL=86400s  <span class="dim">← auto-expire in 24h!</span>
+  Cache:    Redis (feeds, counts, sessions)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip">AWS S3</span>
+          <span class="chip chip-blue">CloudFront CDN</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-pink">Cassandra</span>
+          <span class="chip chip-violet">PostgreSQL</span>
+          <span class="chip">Redis</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">How do Stories auto-expire?</div>
+            <div class="dec-a">Cassandra natively supports TTL (Time To Live) per row. When a story is written: INSERT INTO stories ... USING TTL 86400. After 86400 seconds (24h), Cassandra automatically marks and eventually deletes the row. No cron jobs needed — the DB handles it.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">Why two databases (Cassandra + PostgreSQL)?</div>
+            <div class="dec-a">Use the right tool for the job. Cassandra: posts/stories — high write throughput, time-series, no complex joins needed. PostgreSQL: users/follows/likes — relational, needs joins ("show me all people user X follows who liked this post"), ACID for counts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 7. URL Shortener ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">URL Shortener (Pastebin/TinyURL)</div>
+        <div class="sys-type">Utility</div>
+        <div class="sys-diff diff-easy">Easy</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'url')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'url')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'url')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Given long URL → return short URL</li>
+              <li>Given short URL → redirect to long URL</li>
+              <li>Custom aliases (optional)</li>
+              <li>URL expiry (optional)</li>
+              <li>Click analytics</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>100M URLs created/day</li>
+              <li>Read-heavy: 100:1 read/write ratio</li>
+              <li>Redirect in &lt;10ms</li>
+              <li>Short URLs: 7 chars</li>
+              <li>URLs must be unique, not predictable</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">ENCODE (long → short):</span>
+  1. Generate unique 7-char code:
+     Option A: <span class="kw">hash(long_url)</span> → take first 7 chars of MD5/SHA256 (base62)
+     Option B: <span class="kw">auto-increment ID</span> → convert to base62
+     Base62 = [0-9 a-z A-Z] = 62^7 = 3.5 trillion unique URLs
+
+  2. Store: short_code → { long_url, created_at, expires_at, user_id }
+  3. Return: https://bit.ly/{short_code}
+
+  <span class="lbl">DECODE (short → redirect):</span>
+  Request → Load Balancer
+               │
+          Check <span class="kw">Redis Cache</span>: GET short_code
+          HIT:  Return 301/302 redirect immediately (~1ms)
+          MISS: Query PostgreSQL → populate cache → redirect
+
+  <span class="lbl">SCALE:</span>
+  Write: Single PostgreSQL (write volume is manageable)
+  Read:  Redis cache (99% of redirects served from cache)
+  Analytics: Async via Kafka → ClickHouse (analytics DB)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-pink">Redis</span>
+          <span class="chip chip-violet">PostgreSQL</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip">ClickHouse</span>
+          <span class="chip chip-blue">Base62 Encoding</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">301 vs 302 redirect?</div>
+            <div class="dec-a">301 (permanent): browser caches and never hits your server again — saves load but you lose click analytics. 302 (temporary): browser always hits your server — you capture analytics but more load. Most URL shorteners use 302 for analytics.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">Hash collision handling?</div>
+            <div class="dec-a">Two URLs could hash to the same 7 chars. On write, check if the short code already maps to a different URL. If so, append a counter suffix and re-hash, or use the auto-increment approach (guaranteed unique) instead of content-hashing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 8. Google Drive ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Google Drive</div>
+        <div class="sys-type">File Storage</div>
+        <div class="sys-diff diff-med">Medium</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'gd')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'gd')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'gd')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Upload/download files of any type</li>
+              <li>Folder hierarchy</li>
+              <li>Share files/folders with permissions</li>
+              <li>Sync across devices</li>
+              <li>File versioning</li>
+              <li>Collaborative editing (Docs)</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>15GB free, petabytes total</li>
+              <li>Upload large files (&gt;5GB)</li>
+              <li>Strong consistency (file write must be immediately visible)</li>
+              <li>High availability</li>
+              <li>Eventual sync across devices is acceptable</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">UPLOAD (chunked):</span>
+  Client splits file into 4MB chunks
+  Each chunk: hash(chunk) → check if already exists (deduplication!)
+  Upload missing chunks to <span class="kw">Block Storage</span> (GCS/S3)
+  Metadata DB records: file_id, [chunk_hash_1, chunk_hash_2, ...]
+
+  <span class="lbl">DOWNLOAD:</span>
+  Fetch chunk list from Metadata Service
+  Download chunks (in parallel) from Block Storage
+  Reassemble on client
+
+  <span class="lbl">SYNC:</span>
+  File changed on Device A → upload delta → notify via <span class="kw">WebSocket/SSE</span>
+  Device B receives notification → downloads changed chunks only
+
+  <span class="lbl">DATA MODEL:</span>
+  Files:    MySQL { file_id, name, owner, parent_folder, version }
+  Chunks:   MySQL { file_id, chunk_order, chunk_hash, size }
+  Blocks:   GCS   { chunk_hash → binary data }  <span class="dim">← content-addressed</span>
+  Sharing:  MySQL { file_id, user_id, permission }
+
+  <span class="lbl">VERSIONING:</span>  Keep last N chunk lists per file, not full copies</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip">GCS / S3</span>
+          <span class="chip chip-violet">MySQL</span>
+          <span class="chip chip-pink">Redis</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-blue">WebSockets/SSE</span>
+          <span class="chip">Content Addressing</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">Why chunk files?</div>
+            <div class="dec-a">Three reasons: (1) Resumable uploads — if connection drops, resume from last chunk, not beginning. (2) Delta sync — only upload changed chunks when a file is modified. (3) Deduplication — if chunk_hash already exists in block storage, don't re-upload it (saves storage across all users).</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How is deduplication done?</div>
+            <div class="dec-a">Content-addressable storage: blocks are stored by their hash (SHA-256). Before uploading, client sends chunk hashes. Server checks which hashes already exist. Only missing chunks are uploaded. If two users upload the same file, the blocks are stored once and both metadata records point to the same blocks.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 9. Zoom ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Zoom / Google Meet</div>
+        <div class="sys-type">Video Conferencing</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'zm')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'zm')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'zm')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>1:1 and group video calls (up to 1000)</li>
+              <li>Screen sharing</li>
+              <li>In-meeting chat</li>
+              <li>Recording (local and cloud)</li>
+              <li>Virtual backgrounds</li>
+              <li>Breakout rooms</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>Low latency &lt;150ms (voice), &lt;300ms (video)</li>
+              <li>High availability — call drops = bad UX</li>
+              <li>Use UDP for media (latency &gt; reliability)</li>
+              <li>Handle poor network gracefully</li>
+              <li>Millions of concurrent calls</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">1:1 CALL:</span>
+  Participant A ←──── <span class="kw">WebRTC P2P</span> ────► Participant B
+  <span class="dim">Direct peer-to-peer, Zoom server only does signalling</span>
+  Signalling server: exchange SDP (session description) + ICE candidates
+  STUN: helps clients discover their public IP/port
+  TURN: relay server when P2P is blocked by NAT/firewall
+
+  <span class="lbl">GROUP CALL (3+ participants):</span>
+  Participant A ──► <span class="kw">SFU (Selective Forwarding Unit)</span> ◄── Participant B
+                         │                              │
+                         ▼                              ▼
+                   Participant C                  Participant D
+  <span class="dim">SFU receives one stream from each participant.
+  Forwards only the streams you need to see (active speaker + others at low res)
+  Each participant uploads ONCE, receives N-1 streams</span>
+
+  <span class="lbl">SIGNALLING SERVICE:</span>   WebSocket server (manages call state)
+  <span class="lbl">MEDIA SERVERS (SFU):</span>   Deployed in every region (low latency routing)
+  <span class="lbl">RECORDING:</span>            SFU records stream → S3 → async transcoding → CDN</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-blue">WebRTC</span>
+          <span class="chip chip-pink">SFU (mediasoup/Janus)</span>
+          <span class="chip chip-amber">STUN/TURN</span>
+          <span class="chip chip-violet">WebSockets</span>
+          <span class="chip">UDP</span>
+          <span class="chip">AWS S3</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">SFU vs MCU vs P2P?</div>
+            <div class="dec-a">P2P: each participant sends video to every other (N×(N-1) streams). Breaks at 4+ people. MCU (Multipoint Control Unit): server decodes, mixes, re-encodes into one stream per participant — CPU-intensive. SFU (Selective Forwarding Unit): just forwards streams without decoding — much more scalable. Zoom/Meet use SFU for groups.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">Why UDP over TCP for media?</div>
+            <div class="dec-a">A dropped video frame is acceptable — the next frame arrives in 33ms anyway. A dropped frame in TCP causes retransmit + head-of-line blocking, freezing all subsequent frames. In video calls, a brief visual artifact beats a frozen stream every time. WebRTC runs over SRTP (Secure RTP) over UDP.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 10. Amazon E-commerce ── -->
+    <div class="system">
+      <div class="sys-header">
+        <div class="sys-name">Amazon (E-Commerce)</div>
+        <div class="sys-type">E-Commerce Platform</div>
+        <div class="sys-diff diff-hard">Hard</div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'az')">Requirements</button>
+        <button class="tab-btn" onclick="switchTab(this,'az')">Architecture</button>
+        <button class="tab-btn" onclick="switchTab(this,'az')">Key Decisions</button>
+      </div>
+      <div class="tab-content active">
+        <div class="req-grid">
+          <div class="req-box" style="--rb-color:#6ee7b7;">
+            <div class="req-label">Functional</div>
+            <ul>
+              <li>Product search and browse</li>
+              <li>Product detail pages</li>
+              <li>Shopping cart</li>
+              <li>Place order + checkout</li>
+              <li>Inventory management</li>
+              <li>Order tracking</li>
+            </ul>
+          </div>
+          <div class="req-box" style="--rb-color:#fbbf24;">
+            <div class="req-label">Non-Functional</div>
+            <ul>
+              <li>Millions of concurrent users</li>
+              <li>Inventory must be consistent (no overselling)</li>
+              <li>Cart can be eventually consistent</li>
+              <li>Search must be fast (&lt;200ms)</li>
+              <li>Flash sales: 100x traffic spikes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="arch-block">
+          <div class="arch-label">Architecture</div>
+          <pre>
+  <span class="lbl">PRODUCT SEARCH:</span>
+  Elasticsearch with product catalog indexed by name, category, brand
+  Product updates sync via Kafka to keep index fresh
+
+  <span class="lbl">CART SERVICE:</span>
+  Redis (session-based) ← fast, eventual consistency OK
+  DynamoDB (persistent) ← survives session expiry, logged-out users
+
+  <span class="lbl">ORDER PLACEMENT (most critical):</span>
+  1. Check inventory: <span class="kw">SELECT FOR UPDATE</span> on product (pessimistic lock)
+   - or -  <span class="kw">Optimistic locking</span>: CAS on inventory count
+  2. Reserve inventory → Create order record
+  3. Process payment (Stripe) → Confirm order
+  4. Publish "order_placed" event to Kafka
+  <span class="dim">All steps in one ACID transaction — SQL database</span>
+
+  <span class="lbl">INVENTORY SERVICE:</span>
+  PostgreSQL with row-level locks for inventory counts
+  Redis cache for product page display (can be slightly stale)
+  <span class="bad">NEVER cache inventory for order placement — must be fresh!</span>
+
+  <span class="lbl">FLASH SALE HANDLING:</span>
+  Pre-warm caches, scale horizontally in advance
+  Queue requests via Redis SETNX (atomic: first to set wins)</pre>
+        </div>
+        <div class="stack-row">
+          <span class="chip chip-pink">Elasticsearch</span>
+          <span class="chip chip-violet">PostgreSQL</span>
+          <span class="chip chip-amber">Kafka</span>
+          <span class="chip chip-blue">Redis</span>
+          <span class="chip">DynamoDB</span>
+          <span class="chip">Stripe</span>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="decisions">
+          <div class="decision">
+            <div class="dec-q">Optimistic vs Pessimistic locking for inventory?</div>
+            <div class="dec-a">Pessimistic (SELECT FOR UPDATE): lock the row while checking+decrementing — safe but serialises concurrent orders for the same product. Optimistic (CAS): read inventory, attempt update with WHERE inventory = old_value — retry on failure. Better for high-concurrency flash sales where contention is high.</div>
+          </div>
+          <div class="decision">
+            <div class="dec-q">How to handle flash sale traffic spikes?</div>
+            <div class="dec-a">Pre-scale horizontally. Use a queue (Redis or SQS) to absorb burst — accept order requests into queue, process at controlled rate. Pre-warm all caches. Use rate limiting to prevent any single user from hammering the system. Auto-scaling triggers based on CPU/request rate metrics.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /systems-list -->
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- PHASE 07: LLD PROBLEMS                 -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="phase-divider" style="--pd-color:#fbbf24; margin-top:72px;">
+    <div class="phase-tag" style="border-color:#fbbf24; color:#fbbf24;">Phase 07</div>
+    <div class="phase-line" style="background:linear-gradient(to right, #fbbf24, transparent);"></div>
+    <div class="phase-desc">LLD PRACTICE — 10 CODING PROBLEMS</div>
+  </div>
+
+  <div class="lld-grid">
+
+    <div class="lld-card" style="--lc:#6ee7b7;">
+      <div class="lld-header">
+        <div class="lld-name">Parking Lot</div>
+        <div class="lld-pattern">Strategy + Singleton</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a multi-level parking lot system that handles different vehicle types and pricing.</p>
+        <div class="entities-row">
+          <span class="entity">ParkingLot</span>
+          <span class="entity">Level</span>
+          <span class="entity">ParkingSpot</span>
+          <span class="entity">Vehicle</span>
+          <span class="entity">Ticket</span>
+          <span class="entity">PricingStrategy</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Singleton:</span>    ParkingLot — only one lot
+<span class="kw">Strategy:</span>     PricingStrategy interface
+              HourlyPricing / FlatRatePricing / WeekendPricing
+
+<span class="kw">Inheritance:</span>  Spot extends ParkingSpot
+              MotorbikeSpot / CompactSpot / LargeSpot
+
+<span class="kw">Flow:</span>
+  vehicle.enter() → findAvailableSpot(vehicle.type)
+    → mark spot occupied → issue Ticket(spot, time)
+  vehicle.exit(ticket) → calculateFee(strategy)
+    → mark spot free → process payment</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#fbbf24;">
+      <div class="lld-header">
+        <div class="lld-name">Chess Game</div>
+        <div class="lld-pattern">Command + State + Observer</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a fully functional chess game with move validation, turn management, and undo functionality.</p>
+        <div class="entities-row">
+          <span class="entity">Game</span>
+          <span class="entity">Board</span>
+          <span class="entity">Piece</span>
+          <span class="entity">Move</span>
+          <span class="entity">Player</span>
+          <span class="entity">MoveHistory</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Command:</span>    MoveCommand { piece, from, to }
+            execute() + undo() — enables undo/redo
+            Stack&lt;MoveCommand&gt; history
+
+<span class="kw">Polymorphism:</span> Piece abstract class
+            King/Queen/Rook/Bishop/Knight/Pawn
+            each overrides: getValidMoves(board)
+
+<span class="kw">State:</span>      GameState: ONGOING / CHECK / CHECKMATE / STALEMATE
+            transitions based on board evaluation after each move
+
+<span class="kw">Observer:</span>  Board notifies UI on each state change</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#60a5fa;">
+      <div class="lld-header">
+        <div class="lld-name">Notification System</div>
+        <div class="lld-pattern">Observer + Strategy + Factory</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a multi-channel notification system that sends via Email, SMS, Push, and Slack.</p>
+        <div class="entities-row">
+          <span class="entity">NotificationService</span>
+          <span class="entity">Channel</span>
+          <span class="entity">Template</span>
+          <span class="entity">User</span>
+          <span class="entity">Preference</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Strategy:</span>    NotificationChannel interface
+             EmailChannel / SMSChannel / PushChannel / SlackChannel
+
+<span class="kw">Factory:</span>     ChannelFactory.create("email") → EmailChannel
+
+<span class="kw">Observer:</span>    EventBus — services publish events
+             NotificationService subscribes and dispatches
+
+<span class="kw">User Prefs:</span>  user.preferredChannels = ["push", "email"]
+             system respects opt-outs
+
+<span class="kw">Rate limiting:</span> track sends per user per channel per hour</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#f472b6;">
+      <div class="lld-header">
+        <div class="lld-name">Elevator System</div>
+        <div class="lld-pattern">State + Strategy</div>
+      </div>
+      <div class="lld-body">
+        <p>Design an elevator controller for a building with multiple elevators, handling requests efficiently.</p>
+        <div class="entities-row">
+          <span class="entity">ElevatorController</span>
+          <span class="entity">Elevator</span>
+          <span class="entity">Floor</span>
+          <span class="entity">Request</span>
+          <span class="entity">DispatchStrategy</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">State:</span>     ElevatorState: IDLE / MOVING_UP / MOVING_DOWN / DOOR_OPEN
+           transitions: request arrives, floor reached, door timeout
+
+<span class="kw">Strategy:</span>  DispatchStrategy interface
+           NearestElevator / SCan (LOOK) / RoundRobin
+           SCan: elevator serves all requests in one direction
+           before reversing (like a hard disk seek algorithm)
+
+<span class="kw">Controller:</span> receives all floor requests
+            picks best elevator using DispatchStrategy
+            adds destination to elevator's stop queue (sorted set)</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#a78bfa;">
+      <div class="lld-header">
+        <div class="lld-name">ATM Machine</div>
+        <div class="lld-pattern">State + Chain of Responsibility</div>
+      </div>
+      <div class="lld-body">
+        <p>Design an ATM system handling card insertion, PIN verification, cash withdrawal, and balance enquiry.</p>
+        <div class="entities-row">
+          <span class="entity">ATM</span>
+          <span class="entity">ATMState</span>
+          <span class="entity">Card</span>
+          <span class="entity">Account</span>
+          <span class="entity">CashDispenser</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">State Machine:</span>
+  IdleState → CardInsertedState → PINEnteredState
+  → TransactionState → EjectCardState → IdleState
+  Each state only allows valid operations
+  Wrong PIN → PINEnteredState.retries++ → after 3: EjectCard
+
+<span class="kw">Chain of Responsibility:</span>
+  Withdraw request: AmountValidator → BalanceChecker
+    → DailyLimitChecker → CashDispenser
+
+<span class="kw">Thread Safety:</span>
+  Withdrawal must be atomic — balance check + debit
+  Use pessimistic lock on Account during transaction</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#34d399;">
+      <div class="lld-header">
+        <div class="lld-name">Library Management System</div>
+        <div class="lld-pattern">SOLID · OOP · Observer</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a library system for issuing/returning books, managing members, and handling reservations.</p>
+        <div class="entities-row">
+          <span class="entity">Library</span>
+          <span class="entity">Book</span>
+          <span class="entity">BookItem</span>
+          <span class="entity">Member</span>
+          <span class="entity">Loan</span>
+          <span class="entity">Reservation</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Key distinction:</span>  Book (metadata: title, ISBN) vs
+                  BookItem (physical copy: barcode, shelf)
+                  One Book can have many BookItems
+
+<span class="kw">Observer:</span>    When BookItem returned → notify waiting reservation queue
+             First in queue gets notified via NotificationService
+
+<span class="kw">SRP:</span>         BookService / MemberService / LoanService / FineService
+             each has one responsibility
+
+<span class="kw">Fine calculation:</span>  overdue days × daily rate
+                   FineCalculator is injected (DIP) — easy to change rate</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#fb7185;">
+      <div class="lld-header">
+        <div class="lld-name">Rate Limiter</div>
+        <div class="lld-pattern">Strategy + Decorator</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a configurable rate limiter supporting multiple algorithms that can wrap any service.</p>
+        <div class="entities-row">
+          <span class="entity">RateLimiter</span>
+          <span class="entity">RateLimitStrategy</span>
+          <span class="entity">TokenBucket</span>
+          <span class="entity">SlidingWindowLog</span>
+          <span class="entity">RateLimitedService</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Strategy:</span>    RateLimitStrategy interface: isAllowed(clientId): boolean
+             TokenBucketStrategy / SlidingWindowStrategy / FixedWindowStrategy
+
+<span class="kw">Decorator:</span>   RateLimitedService wraps any IService
+             call() { if (!limiter.isAllowed(clientId)) throw 429 Error
+                      return this.wrappedService.call() }
+
+<span class="kw">Thread Safety:</span>  AtomicInteger for token count
+                 ConcurrentHashMap for per-client windows
+                 All check-and-decrement operations must be atomic
+
+<span class="kw">Distributed:</span>  Use Redis for shared state across server instances
+               SETNX + EXPIRE for atomic window operations</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#38bdf8;">
+      <div class="lld-header">
+        <div class="lld-name">Hotel Booking System</div>
+        <div class="lld-pattern">Builder + Facade + Observer</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a hotel room booking system with search, reservation, check-in/out, and billing.</p>
+        <div class="entities-row">
+          <span class="entity">Hotel</span>
+          <span class="entity">Room</span>
+          <span class="entity">Booking</span>
+          <span class="entity">Guest</span>
+          <span class="entity">Payment</span>
+          <span class="entity">BookingSearch</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Builder:</span>    BookingSearchBuilder
+            .setCheckIn(date).setCheckOut(date)
+            .setGuests(2).setRoomType(DELUXE)
+            .setPriceRange(1000, 5000).build()
+
+<span class="kw">Facade:</span>     BookingFacade.bookRoom(criteria)
+            hides: availability check + pricing + payment + confirmation
+
+<span class="kw">Concurrency:</span> Two guests can't book the same room for same dates
+             Optimistic locking: check availability WITH version number
+             Retry if version changed (another booking won the race)
+
+<span class="kw">Observer:</span>   Booking state changes → notify Guest (email/SMS)
+             BookingObserver: ConfirmationSender / CalendarSync</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#fbbf24;">
+      <div class="lld-header">
+        <div class="lld-name">Task Manager (Jira-like)</div>
+        <div class="lld-pattern">Composite + Observer + State</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a project management tool with epics, stories, tasks, assignments, and status tracking.</p>
+        <div class="entities-row">
+          <span class="entity">Project</span>
+          <span class="entity">Epic</span>
+          <span class="entity">Story</span>
+          <span class="entity">Task</span>
+          <span class="entity">User</span>
+          <span class="entity">Sprint</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">Composite:</span>  WorkItem abstract class
+            Epic → has many Stories → has many Tasks
+            All implement: getStatus() / getCompletionPercent()
+            Parent completion = average of children
+
+<span class="kw">State:</span>      TaskState: TODO → IN_PROGRESS → IN_REVIEW → DONE
+            Transitions validated (can't go DONE from TODO directly)
+
+<span class="kw">Observer:</span>   Task assigned → notify assignee
+            Task due tomorrow → notify via NotificationService
+            Status changed → update parent Epic automatically
+
+<span class="kw">SRP:</span>       SprintService / AssignmentService / ReportingService</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="lld-card" style="--lc:#e879f9;">
+      <div class="lld-header">
+        <div class="lld-name">Vending Machine</div>
+        <div class="lld-pattern">State + Strategy + Template Method</div>
+      </div>
+      <div class="lld-body">
+        <p>Design a vending machine that handles product selection, payment (coins/card), dispensing, and change.</p>
+        <div class="entities-row">
+          <span class="entity">VendingMachine</span>
+          <span class="entity">VendingState</span>
+          <span class="entity">Product</span>
+          <span class="entity">PaymentProcessor</span>
+          <span class="entity">Inventory</span>
+        </div>
+        <div class="arch-block">
+          <div class="arch-label">Key Design Points</div>
+          <pre>
+<span class="kw">State Machine:</span>
+  IdleState → ProductSelectedState → PaymentState
+    → DispensingState → ChangeState → IdleState
+  Each state handles: insertCoin() / selectProduct() / cancel()
+  Invalid ops in wrong state: throw InvalidStateException
+
+<span class="kw">Strategy:</span>    PaymentProcessor interface
+             CoinPayment / CardPayment / UPIPayment
+
+<span class="kw">Template Method:</span>  dispense()
+  checkInventory() → validatePayment() → releaseProduct()
+    → returnChange() → updateInventory()
+  Subclasses override steps but order is fixed
+
+<span class="kw">Thread Safety:</span>  Two users selecting same last item
+               AtomicInteger inventory count + CAS update</pre>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /lld-grid -->
+
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="gr-label">Key Takeaway — Phase 06 &amp; 07</div>
+    <p>
+      Every system uses the same toolkit —<br>
+      the mastery is in knowing <span style="color:var(--a1);">which combination</span> fits each problem.<br>
+      <span style="color:var(--a2);">Justify every choice.</span>
+      <span style="color:var(--a3);">Name the pattern.</span>
+      <span style="color:var(--a4);">Explain the trade-off.</span>
+    </p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-row">
+    <a class="nav-btn" href="phase-05-lld.html">← Phase 05: LLD Patterns</a>
+    <a class="nav-btn" href="#">🎯 Roadmap Complete</a>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(btn, system) {
+    const container = btn.closest('.system') || btn.closest('.lld-card');
+    const tabs = btn.parentElement;
+    const btns = tabs.querySelectorAll('.tab-btn');
+    const contents = container.querySelectorAll('.tab-content');
+    const idx = Array.from(btns).indexOf(btn);
+    btns.forEach(b => b.classList.remove('active'));
+    contents.forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    if (contents[idx]) contents[idx].classList.add('active');
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 02 — Databases Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --accent1: #7c3aed;
+    --accent1-light: #a78bfa;
+    --accent2: #00e5ff;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #ef4444;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --light: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 28px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 56px;
+    animation: fadeDown 0.7s ease forwards;
+  }
+
+  .breadcrumb {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .breadcrumb span { color: var(--accent1-light); }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 10%, var(--accent1-light) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .badge {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .badge-purple { background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.35); color: var(--accent1-light); }
+  .badge-cyan   { background: rgba(0,229,255,0.08);  border: 1px solid rgba(0,229,255,0.25);  color: var(--accent2); }
+  .badge-amber  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); color: var(--accent3); }
+  .badge-green  { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: var(--accent4); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 24px 28px;
+    margin-bottom: 60px;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+    opacity: 0;
+  }
+  .toc-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1-light);
+    margin-bottom: 14px;
+  }
+  .toc-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px 24px;
+  }
+  .toc-list li a {
+    font-size: 12px;
+    color: var(--light);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+  .toc-list li a:hover { color: var(--accent1-light); }
+  .toc-list li a::before { content: '→'; color: var(--accent1-light); font-size: 11px; opacity: 0.6; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 76px;
+    animation: fadeUp 0.6s ease forwards;
+    opacity: 0;
+  }
+  .section:nth-child(1) { animation-delay: 0.15s; }
+  .section:nth-child(2) { animation-delay: 0.22s; }
+  .section:nth-child(3) { animation-delay: 0.29s; }
+  .section:nth-child(4) { animation-delay: 0.36s; }
+  .section:nth-child(5) { animation-delay: 0.43s; }
+  .section:nth-child(6) { animation-delay: 0.50s; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1-light);
+    margin-bottom: 5px;
+    opacity: 0.75;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #fff;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .subsection { margin-top: 38px; }
+
+  .subsection-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent1-light);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .subsection-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent1-light);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--light);
+    margin-bottom: 14px;
+    line-height: 1.85;
+  }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: #0c0c13;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    padding: 20px 22px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .code-block-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent1-light);
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+  pre {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #c4b5fd;
+    line-height: 1.75;
+    white-space: pre;
+  }
+  pre .dim     { color: #3d3d5c; }
+  pre .keyword { color: var(--accent2); }
+  pre .string  { color: #86efac; }
+  pre .arrow   { color: var(--accent1-light); }
+  pre .label   { color: var(--accent3); }
+  pre .good    { color: var(--accent4); }
+  pre .bad     { color: var(--accent5); }
+  pre .pink    { color: var(--accent6); }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: #0c0c13; border-bottom: 2px solid var(--accent1); }
+  thead th { padding: 10px 16px; text-align: left; font-family: 'Syne', sans-serif; font-size: 11px; letter-spacing: 1px; color: #fff; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 16px; color: var(--light); vertical-align: top; line-height: 1.6; font-size: 12px; }
+  tbody td:first-child { color: var(--accent1-light); font-weight: 700; white-space: nowrap; }
+
+  /* ── Callouts ── */
+  .callout {
+    padding: 18px 22px;
+    margin: 18px 0;
+    font-size: 12px;
+    line-height: 1.75;
+  }
+  .callout-purple { background: rgba(124,58,237,0.07); border: 1px solid rgba(124,58,237,0.25); border-left: 3px solid var(--accent1); }
+  .callout-cyan   { background: rgba(0,229,255,0.05);  border: 1px solid rgba(0,229,255,0.2);  border-left: 3px solid var(--accent2); }
+  .callout-amber  { background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-left: 3px solid var(--accent3); }
+  .callout-green  { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); border-left: 3px solid var(--accent4); }
+  .callout-red    { background: rgba(239,68,68,0.05);  border: 1px solid rgba(239,68,68,0.2);  border-left: 3px solid var(--accent5); }
+  .callout-pink   { background: rgba(236,72,153,0.05); border: 1px solid rgba(236,72,153,0.2); border-left: 3px solid var(--accent6); }
+
+  .callout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .callout-purple .callout-title { color: var(--accent1-light); }
+  .callout-cyan   .callout-title { color: var(--accent2); }
+  .callout-amber  .callout-title { color: var(--accent3); }
+  .callout-green  .callout-title { color: var(--accent4); }
+  .callout-red    .callout-title { color: var(--accent5); }
+  .callout-pink   .callout-title { color: var(--accent6); }
+  .callout p { color: var(--light); margin: 0; font-size: 12px; }
+
+  /* ── Key grid cards ── */
+  .key-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .key-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .key-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .key-card-icon { font-size: 1.4rem; margin-bottom: 10px; }
+  .key-card-title { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .key-card p { font-size: 11.5px; color: var(--muted); margin: 0; line-height: 1.65; }
+
+  /* db type cards */
+  .db-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .db-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    border-top: 3px solid var(--card-color, var(--accent1));
+    transition: transform 0.2s;
+  }
+  .db-card:hover { transform: translateY(-2px); }
+  .db-card-type { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--card-color, var(--accent1)); margin-bottom: 6px; opacity: 0.8; }
+  .db-card-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .db-card ul { list-style: none; }
+  .db-card ul li { font-size: 11px; color: var(--muted); padding: 2px 0 2px 12px; position: relative; line-height: 1.5; }
+  .db-card ul li::before { content: '›'; position: absolute; left: 0; color: var(--card-color, var(--accent1)); }
+
+  /* shard diagram */
+  .shard-visual {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .shard-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent1);
+    padding: 14px;
+    text-align: center;
+  }
+  .shard-box-title { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--accent1-light); margin-bottom: 6px; }
+  .shard-box-data { font-size: 10px; color: var(--muted); line-height: 1.7; }
+
+  /* consistency spectrum */
+  .spectrum {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .spectrum-bar {
+    height: 8px;
+    background: linear-gradient(to right, var(--accent5), var(--accent3), var(--accent4));
+    border-radius: 4px;
+    margin: 12px 0;
+    position: relative;
+  }
+  .spectrum-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .spectrum-labels span:first-child { color: var(--accent5); }
+  .spectrum-labels span:last-child  { color: var(--accent4); }
+
+  /* CAP triangle */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .cap-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px;
+    text-align: center;
+  }
+  .cap-letter { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 6px; }
+  .cap-name   { font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+  .cap-desc   { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .cap-c .cap-letter { color: var(--accent2); }
+  .cap-a .cap-letter { color: var(--accent4); }
+  .cap-p .cap-letter { color: var(--accent3); }
+
+  /* isolation levels */
+  .isolation-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .iso-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-left: 3px solid var(--iso-color, var(--accent1));
+  }
+  .iso-name { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--iso-color, var(--accent1)); margin-bottom: 6px; }
+  .iso-desc { font-size: 11px; color: var(--muted); line-height: 1.55; }
+
+  /* Golden rule */
+  .golden-rule {
+    background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(0,229,255,0.06));
+    border: 1px solid rgba(124,58,237,0.25);
+    padding: 28px 32px;
+    margin-top: 64px;
+    text-align: center;
+    animation: fadeUp 0.6s ease 0.6s forwards;
+    opacity: 0;
+  }
+  .golden-rule-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent1-light); margin-bottom: 12px; }
+  .golden-rule p { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; color: #fff; line-height: 1.65; margin: 0; }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 48px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 13px 22px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1-light);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .nav-btn:hover { background: rgba(124,58,237,0.07); border-color: var(--accent1); }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 700px) {
+    .cap-grid, .isolation-row, .shard-visual { grid-template-columns: 1fr 1fr; }
+    .key-grid, .db-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+  }
+  @media (max-width: 480px) {
+    .cap-grid, .isolation-row, .shard-visual { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="breadcrumb">System Design Roadmap &nbsp;›&nbsp; <span>Phase 02</span></div>
+    <h1>Databases<br>Deep Dive</h1>
+    <div class="header-meta">
+      <span class="badge badge-purple">Week 3 – 4</span>
+      <span class="badge badge-cyan">6 Core Topics</span>
+      <span class="badge badge-amber">HLD Foundation</span>
+      <span class="badge badge-green">CAP · ACID · Sharding</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#sql">SQL Databases & ACID</a></li>
+      <li><a href="#nosql">NoSQL — 4 Types Explained</a></li>
+      <li><a href="#sharding">Sharding & Partitioning</a></li>
+      <li><a href="#replication">Replication & Migration</a></li>
+      <li><a href="#cap">CAP Theorem</a></li>
+      <li><a href="#consistency">Consistency Models</a></li>
+      <li><a href="#isolation">Isolation Levels</a></li>
+      <li><a href="#choose">When to Choose What</a></li>
+    </ul>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 1: SQL                 -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="sql">
+    <div class="section-label">Topic 01</div>
+    <div class="section-title">SQL Databases &amp; ACID Properties</div>
+
+    <p>SQL (Structured Query Language) databases store data in <strong style="color:#fff;">structured tables with a fixed schema</strong>. Relationships between tables are defined via foreign keys. SQL databases are the backbone of most business-critical systems — payments, banking, e-commerce orders.</p>
+
+    <div class="subsection">
+      <div class="subsection-title">ACID Properties — The 4 Guarantees</div>
+      <p>ACID is what makes SQL databases trustworthy for critical data. Every transaction is guaranteed to follow all four properties.</p>
+
+      <div class="key-grid">
+        <div class="key-card">
+          <div class="key-card-icon">⚛️</div>
+          <div class="key-card-title">A — Atomicity</div>
+          <p>A transaction is all-or-nothing. If you transfer ₹1000 from A to B, either both the debit AND credit happen, or neither does. No partial states.</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-icon">🔒</div>
+          <div class="key-card-title">C — Consistency</div>
+          <p>The database moves from one valid state to another valid state. All rules, constraints, and relationships are enforced after every transaction.</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-icon">🧱</div>
+          <div class="key-card-title">I — Isolation</div>
+          <p>Concurrent transactions don't interfere with each other. Each transaction sees data as if it's the only one running (depending on isolation level).</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-icon">💾</div>
+          <div class="key-card-title">D — Durability</div>
+          <p>Once committed, a transaction is permanently saved — even if the server crashes immediately after. Data is written to disk (WAL logs).</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Why Atomicity Matters — Bank Transfer Example</div>
+        <pre>
+<span class="label">Transaction: Transfer ₹1000 from Alice → Bob</span>
+
+  Step 1: Debit  Alice  by ₹1000   <span class="dim">← success</span>
+  Step 2: Credit Bob    by ₹1000   <span class="dim">← server CRASHES here</span>
+
+<span class="bad">Without Atomicity:</span>  Alice lost ₹1000. Bob got nothing. Money vanished.
+<span class="good">With Atomicity:</span>    Both steps roll back. Alice's balance restored. Safe.</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Indexes — Making Queries Fast</div>
+      <p>Without an index, a query like <code style="color:var(--accent2);font-size:12px;">SELECT * FROM users WHERE email = 'alice@gmail.com'</code> scans every row in the table — a full table scan. With a million rows, that's slow.</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Index Concept</div>
+        <pre>
+<span class="dim">Without index:</span>  Scan all 1,000,000 rows  →  O(n)  →  <span class="bad">SLOW</span>
+<span class="dim">With index:</span>     B-Tree lookup on email   →  O(log n)  →  <span class="good">FAST</span>
+
+<span class="dim">An index is a separate data structure (B-Tree or Hash) that stores
+a sorted copy of a column's values + pointer to the full row.</span>
+
+<span class="label">Tradeoff:</span>  Indexes speed up READs but slow down WRITEs
+           (every insert/update must also update the index)
+<span class="label">Rule:</span>     Index columns you frequently filter/sort/join on</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Popular SQL Databases</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Database</th><th>Best For</th><th>Notable Users</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>Complex queries, JSON support, extensibility</td><td>Instagram, Reddit, Shopify</td></tr>
+            <tr><td>MySQL</td><td>Web apps, high read throughput</td><td>Facebook (historically), Twitter, YouTube</td></tr>
+            <tr><td>SQLite</td><td>Embedded / mobile / local storage</td><td>iOS apps, Android apps, browsers</td></tr>
+            <tr><td>Amazon Aurora</td><td>Cloud-native, auto-scaling SQL</td><td>Netflix, Airbnb</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 2: NoSQL               -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="nosql">
+    <div class="section-label">Topic 02</div>
+    <div class="section-title">NoSQL — 4 Types Explained</div>
+
+    <p>NoSQL databases sacrifice some of SQL's guarantees (like strict schema and ACID) in exchange for <strong style="color:#fff;">flexibility, horizontal scalability, and speed</strong> at massive scale. There is no single "NoSQL" — there are four distinct types, each built for a different problem.</p>
+
+    <div class="db-grid">
+      <div class="db-card" style="--card-color: #00e5ff;">
+        <div class="db-card-type">Type 01</div>
+        <div class="db-card-name">Document DB</div>
+        <ul>
+          <li>Stores JSON-like documents</li>
+          <li>Flexible, schema-less</li>
+          <li>Great for nested/variable data</li>
+          <li><strong style="color:#fff;">MongoDB, CouchDB, Firestore</strong></li>
+          <li>Use: User profiles, product catalogs</li>
+        </ul>
+      </div>
+      <div class="db-card" style="--card-color: #a78bfa;">
+        <div class="db-card-type">Type 02</div>
+        <div class="db-card-name">Key-Value DB</div>
+        <ul>
+          <li>Simplest model: key → value</li>
+          <li>Blazing fast reads/writes</li>
+          <li>Usually in-memory</li>
+          <li><strong style="color:#fff;">Redis, DynamoDB, Memcached</strong></li>
+          <li>Use: Sessions, caching, leaderboards</li>
+        </ul>
+      </div>
+      <div class="db-card" style="--card-color: #f59e0b;">
+        <div class="db-card-type">Type 03</div>
+        <div class="db-card-name">Wide-Column DB</div>
+        <ul>
+          <li>Rows + dynamic columns</li>
+          <li>Optimised for time-series data</li>
+          <li>Extremely high write throughput</li>
+          <li><strong style="color:#fff;">Cassandra, HBase, Bigtable</strong></li>
+          <li>Use: Logs, IoT, messaging history</li>
+        </ul>
+      </div>
+      <div class="db-card" style="--card-color: #10b981;">
+        <div class="db-card-type">Type 04</div>
+        <div class="db-card-name">Graph DB</div>
+        <ul>
+          <li>Nodes + edges + properties</li>
+          <li>Native relationship traversal</li>
+          <li>Cypher query language</li>
+          <li><strong style="color:#fff;">Neo4j, Amazon Neptune</strong></li>
+          <li>Use: Social graphs, fraud detection</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">SQL vs NoSQL — The Full Comparison</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th>SQL</th><th>NoSQL</th></tr></thead>
+          <tbody>
+            <tr><td>Schema</td><td>Fixed, predefined</td><td>Flexible, dynamic</td></tr>
+            <tr><td>ACID</td><td>Full ACID guarantees</td><td>Varies — often eventual consistency</td></tr>
+            <tr><td>Scaling</td><td>Vertical (mostly)</td><td>Horizontal (built for it)</td></tr>
+            <tr><td>Joins</td><td>Native, efficient</td><td>No joins — denormalise data instead</td></tr>
+            <tr><td>Query language</td><td>Standardised SQL</td><td>Varies per DB (proprietary)</td></tr>
+            <tr><td>Transactions</td><td>Multi-row, multi-table</td><td>Usually single-document only</td></tr>
+            <tr><td>Best for</td><td>Payments, orders, anything relational</td><td>Scale, speed, unstructured data</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">The Key Mental Model</div>
+        <p>SQL normalises data to avoid duplication (separate tables, linked by keys). NoSQL denormalises — it duplicates data so reads are fast without joins. You trade storage efficiency for read speed. At internet scale, fast reads matter more than saving disk space.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 3: SHARDING            -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="sharding">
+    <div class="section-label">Topic 03</div>
+    <div class="section-title">Sharding &amp; Partitioning</div>
+
+    <p>When a single database server can no longer handle your data volume or query load, you need to split your data across multiple database servers. This is called <strong style="color:#fff;">sharding</strong> (also known as horizontal partitioning).</p>
+
+    <div class="code-block">
+      <div class="code-block-label">The Problem Sharding Solves</div>
+      <pre>
+<span class="bad">Single DB server:</span>
+  ├─ 500 million users
+  ├─ 10 TB of data
+  ├─ 100,000 queries/second
+  └─ <span class="bad">One server can't handle this → bottleneck</span>
+
+<span class="good">After sharding (4 shards):</span>
+  ├─ Shard 1: users A–F   → 125M users, 2.5TB
+  ├─ Shard 2: users G–M   → 125M users, 2.5TB
+  ├─ Shard 3: users N–S   → 125M users, 2.5TB
+  └─ Shard 4: users T–Z   → 125M users, 2.5TB
+     Each shard handles only 25,000 queries/sec  <span class="good">✓ manageable</span></pre>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">3 Sharding Strategies</div>
+
+      <div class="key-grid">
+        <div class="key-card">
+          <div class="key-card-title" style="color:var(--accent2);">Range-Based Sharding</div>
+          <p>Split data by a range of values. Users A–F → Shard 1, G–M → Shard 2, etc. Simple to implement but creates hotspots if one range gets most traffic.</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-title" style="color:var(--accent4);">Hash-Based Sharding</div>
+          <p>Apply a hash function to the shard key (e.g. user_id % 4). Distributes data evenly. Problem: adding a new shard requires rehashing everything.</p>
+        </div>
+        <div class="key-card">
+          <div class="key-card-title" style="color:var(--accent3);">Directory-Based Sharding</div>
+          <p>A lookup table maps keys to shards. Most flexible — you can move data between shards without rehashing. But the lookup table itself becomes a bottleneck.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Hash-Based Sharding — How it Works</div>
+        <pre>
+<span class="keyword">Shard key:</span> user_id
+<span class="keyword">Formula:</span>   shard_number = hash(user_id) % total_shards
+
+user_id = 1042  →  hash(1042) % 4  =  <span class="label">Shard 2</span>
+user_id = 5891  →  hash(5891) % 4  =  <span class="label">Shard 0</span>
+user_id = 2347  →  hash(2347) % 4  =  <span class="label">Shard 3</span>
+
+<span class="dim">Every query for user_id=1042 always goes to Shard 2
+No lookup needed — compute it on the fly</span></pre>
+      </div>
+
+      <div class="callout callout-red">
+        <div class="callout-title">The Hotspot Problem</div>
+        <p>If your shard key is poorly chosen, one shard gets all the traffic. Example: sharding Instagram posts by celebrity user_id — one shard handles Cristiano Ronaldo's 600M followers while others sit idle. Always choose a shard key that distributes queries evenly.</p>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title">Consistent Hashing — The Solution to Re-sharding</div>
+        <p>With regular hash-based sharding, adding one new shard means remapping nearly all keys (because <code style="color:var(--accent1-light);">user_id % 5</code> gives different results than <code style="color:var(--accent1-light);">user_id % 4</code>). Consistent hashing arranges shards on a virtual ring and only remaps the keys that fall between the old and new shard — typically just 1/n of total keys. This is used by Cassandra, DynamoDB, and CDNs.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 4: REPLICATION         -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="replication">
+    <div class="section-label">Topic 04</div>
+    <div class="section-title">Replication &amp; Migration</div>
+
+    <p>Replication means <strong style="color:#fff;">keeping copies of the same data on multiple servers</strong>. This gives you fault tolerance (if one server dies, others serve data) and read scalability (read from any replica).</p>
+
+    <div class="subsection">
+      <div class="subsection-title">3 Replication Models</div>
+
+      <div class="code-block">
+        <div class="code-block-label">Leader-Follower (Most Common)</div>
+        <pre>
+         <span class="keyword">Leader (Primary)</span>
+              │
+     ┌────────┼────────┐
+     ▼        ▼        ▼
+<span class="label">Follower1</span>  <span class="label">Follower2</span>  <span class="label">Follower3</span>
+
+<span class="good">Writes:</span>  Always go to Leader only
+<span class="good">Reads:</span>   Can go to any Follower  <span class="dim">← scales read traffic</span>
+<span class="bad">Problem:</span> Leader dies → need to elect a new leader (failover)</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Multi-Leader Replication</div>
+        <pre>
+  <span class="keyword">Leader A</span>  ←──────────────►  <span class="keyword">Leader B</span>
+(Data Center 1)              (Data Center 2)
+
+<span class="good">Benefit:</span>  Writes accepted in both data centers
+          Low latency for geographically distributed users
+<span class="bad">Problem:</span>  Write conflicts — what if both leaders modify same row?
+          Need a conflict resolution strategy (last-write-wins, CRDT)</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Leaderless Replication (Dynamo-style)</div>
+        <pre>
+  Client writes to <span class="keyword">ALL</span> (or majority of) replicas simultaneously
+
+  <span class="label">Write quorum (w):</span>  Must succeed on w nodes  <span class="dim">e.g. 3 of 5</span>
+  <span class="label">Read quorum  (r):</span>  Must read from r nodes   <span class="dim">e.g. 3 of 5</span>
+  <span class="label">Rule:</span>  w + r > n  →  guaranteed to read latest write
+
+  <span class="dim">Used by: Cassandra, DynamoDB, Riak</span></pre>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title">Sync vs Async Replication Trade-off</div>
+        <p><strong style="color:#fff;">Synchronous:</strong> Leader waits for follower to confirm before acknowledging the write. Zero data loss but slower writes (you wait for network round-trip).<br><br>
+        <strong style="color:#fff;">Asynchronous:</strong> Leader acknowledges immediately, replication happens in background. Faster writes but risk of data loss if leader crashes before follower catches up (replication lag).</p>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Zero-Downtime Database Migration</div>
+      <p>Migrating a live production database without dropping requests is one of the hardest engineering challenges. Here's the standard approach:</p>
+
+      <div class="code-block">
+        <div class="code-block-label">Expand-Contract Migration Pattern</div>
+        <pre>
+<span class="label">Phase 1 — Expand:</span>
+  Add new column (nullable) alongside old one
+  Deploy code that writes to BOTH old and new column
+  <span class="dim">Old readers still work. No downtime.</span>
+
+<span class="label">Phase 2 — Backfill:</span>
+  Background job copies data from old → new column for existing rows
+  Run in batches to avoid locking the table
+
+<span class="label">Phase 3 — Switch:</span>
+  Deploy code that reads from new column
+  Monitor for errors
+
+<span class="label">Phase 4 — Contract:</span>
+  Remove old column (now unused)
+  <span class="good">Migration complete with zero downtime</span></pre>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 5: CAP THEOREM         -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="cap">
+    <div class="section-label">Topic 05</div>
+    <div class="section-title">CAP Theorem</div>
+
+    <p>The CAP Theorem states: <strong style="color:#fff;">in a distributed system, you can only guarantee 2 of these 3 properties simultaneously</strong>. When a network partition occurs (and it always eventually will), you must choose between Consistency and Availability.</p>
+
+    <div class="cap-grid">
+      <div class="cap-card cap-c">
+        <div class="cap-letter">C</div>
+        <div class="cap-name">Consistency</div>
+        <div class="cap-desc">Every read returns the most recent write. All nodes see the same data at the same time.</div>
+      </div>
+      <div class="cap-card cap-a">
+        <div class="cap-letter">A</div>
+        <div class="cap-name">Availability</div>
+        <div class="cap-desc">Every request gets a response (even if it might not have the latest data). System stays online.</div>
+      </div>
+      <div class="cap-card cap-p">
+        <div class="cap-letter">P</div>
+        <div class="cap-name">Partition Tolerance</div>
+        <div class="cap-desc">System continues operating even if network packets are lost between nodes.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-amber">
+      <div class="callout-title">Why P is Always Required</div>
+      <p>Network partitions (nodes losing ability to communicate) are inevitable in any distributed system. A node could fail, a cable could be cut, a data center could go offline. You cannot build a real-world distributed system that doesn't tolerate partitions — so P is non-negotiable. The real choice is always: <strong style="color:#fff;">CP or AP</strong>.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-label">CP vs AP — Real System Examples</div>
+      <pre>
+<span class="keyword">CP Systems</span> — Consistency over Availability
+  ├─ HBase, Zookeeper, MongoDB (by default)
+  ├─ During partition: refuse to serve stale data → returns error
+  └─ Used when: <span class="label">Banking, payments, inventory (never show wrong stock)</span>
+
+<span class="keyword">AP Systems</span> — Availability over Consistency
+  ├─ Cassandra, CouchDB, DynamoDB
+  ├─ During partition: serve potentially stale data → always responds
+  └─ Used when: <span class="label">Social media feeds, notifications, shopping carts</span>
+
+<span class="dim">Example: WhatsApp notifications → AP
+  It's OK if you see "2 grey ticks" a second late.
+  Better than the app showing an error.</span>
+
+<span class="dim">Example: Paytm balance → CP
+  You must see your exact current balance.
+  A 500 error is better than showing wrong balance.</span></pre>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 6: CONSISTENCY MODELS  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="consistency">
+    <div class="section-label">Topic 06</div>
+    <div class="section-title">Consistency Models &amp; Isolation Levels</div>
+
+    <div class="subsection">
+      <div class="subsection-title">Consistency Models — The Spectrum</div>
+      <p>Consistency is not binary — it's a spectrum from "always perfectly up-to-date" to "eventually catches up". Each level trades off freshness for performance.</p>
+
+      <div class="spectrum">
+        <div class="spectrum-labels">
+          <span>WEAKEST → Fastest</span>
+          <span>STRONGEST → Slowest</span>
+        </div>
+        <div class="spectrum-bar"></div>
+        <div class="spectrum-labels">
+          <span style="color:var(--accent5);">Eventual</span>
+          <span style="color:var(--accent3);">Causal</span>
+          <span style="color:var(--accent4);">Linearizable</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th>Guarantee</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Strong / Linearizable</td>
+              <td>Every read sees the most recent write, globally. Behaves as if there's only one copy of data.</td>
+              <td>Bank balances, stock prices, inventory counts</td>
+            </tr>
+            <tr>
+              <td>Causal Consistency</td>
+              <td>Operations that are causally related are seen by all in the same order. Unrelated ops can appear out of order.</td>
+              <td>Comment replies (reply always appears after original post)</td>
+            </tr>
+            <tr>
+              <td>Quorum Consistency</td>
+              <td>Read/write must succeed on majority of nodes (w + r > n). Middle ground between strong and eventual.</td>
+              <td>Cassandra with tunable consistency, DynamoDB</td>
+            </tr>
+            <tr>
+              <td>Eventual Consistency</td>
+              <td>If no new writes occur, all replicas will eventually converge to the same value. No time guarantee.</td>
+              <td>DNS propagation, social media likes count, notifications</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-cyan">
+        <div class="callout-title">Eventual Consistency — Real Example</div>
+        <p>When you post a tweet, your follower in another country might not see it for a few seconds because their regional server hasn't synced yet — but it will eventually. That's eventual consistency. Twitter can tolerate this. Paytm cannot — your debit must be instantly visible everywhere.</p>
+      </div>
+    </div>
+
+    <div class="subsection" id="isolation">
+      <div class="subsection-title">Isolation Levels — 4 Levels in SQL</div>
+      <p>Isolation levels control how transactions interact with each other when running concurrently. Higher isolation = safer but slower (more locking overhead).</p>
+
+      <div class="isolation-row">
+        <div class="iso-card" style="--iso-color:#ef4444;">
+          <div class="iso-name">Read Uncommitted</div>
+          <div class="iso-desc">Can read data that hasn't been committed yet (dirty reads). Fastest but most dangerous. Rarely used.</div>
+        </div>
+        <div class="iso-card" style="--iso-color:#f59e0b;">
+          <div class="iso-name">Read Committed</div>
+          <div class="iso-desc">Only read committed data. Default in PostgreSQL. Prevents dirty reads but allows non-repeatable reads.</div>
+        </div>
+        <div class="iso-card" style="--iso-color:#10b981;">
+          <div class="iso-name">Repeatable Read</div>
+          <div class="iso-desc">Same row read twice gives same result within a transaction. Prevents dirty + non-repeatable reads. Default in MySQL.</div>
+        </div>
+        <div class="iso-card" style="--iso-color:#a78bfa;">
+          <div class="iso-name">Serializable</div>
+          <div class="iso-desc">Transactions execute as if sequential. Fully safe, zero anomalies. Slowest — heavy locking. Use for financial ops.</div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Problems Each Level Prevents</div>
+        <pre>
+                     <span class="label">Dirty   Non-Rep  Phantom</span>
+                     <span class="label">Read    Read     Read</span>
+Read Uncommitted  →  <span class="bad">✗</span>       <span class="bad">✗</span>        <span class="bad">✗</span>
+Read Committed    →  <span class="good">✓</span>       <span class="bad">✗</span>        <span class="bad">✗</span>
+Repeatable Read   →  <span class="good">✓</span>       <span class="good">✓</span>        <span class="bad">✗</span>
+Serializable      →  <span class="good">✓</span>       <span class="good">✓</span>        <span class="good">✓</span>
+
+<span class="dim">Dirty Read:       Read a value that another transaction later rolls back
+Non-Repeatable:   Read same row twice, get different values (updated between reads)
+Phantom Read:     Query returns different rows on two reads (rows inserted between reads)</span></pre>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- SECTION 7: WHEN TO CHOOSE WHAT -->
+  <!-- ═══════════════════════════════ -->
+  <div class="section" id="choose">
+    <div class="section-label">Topic 07</div>
+    <div class="section-title">When to Choose What</div>
+
+    <p>This is the most important output of Phase 2 — being able to justify your database choice in a system design interview. Here's the decision framework:</p>
+
+    <div class="code-block">
+      <div class="code-block-label">Database Decision Framework</div>
+      <pre>
+<span class="label">Is your data relational with complex joins?</span>
+  YES → Start with <span class="keyword">SQL</span> (PostgreSQL / MySQL)
+
+<span class="label">Do you need ACID transactions (payments, orders)?</span>
+  YES → <span class="keyword">SQL</span> (with Serializable or Repeatable Read isolation)
+
+<span class="label">Do you need massive write throughput (logs, events, IoT)?</span>
+  YES → <span class="keyword">Cassandra</span> (wide-column, AP, eventual consistency)
+
+<span class="label">Do you need ultra-fast key lookups (sessions, caching)?</span>
+  YES → <span class="keyword">Redis</span> (key-value, in-memory)
+
+<span class="label">Do you have flexible/nested/variable schema (user profiles)?</span>
+  YES → <span class="keyword">MongoDB</span> (document DB)
+
+<span class="label">Do you need to traverse relationships (social graphs, fraud)?</span>
+  YES → <span class="keyword">Neo4j</span> (graph DB)
+
+<span class="label">Do you need global distribution with multi-region writes?</span>
+  YES → <span class="keyword">DynamoDB</span> or <span class="keyword">Cassandra</span></pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>System</th><th>Database Choice</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>WhatsApp (messages)</td><td>Cassandra</td><td>High write throughput, time-series, AP</td></tr>
+          <tr><td>Uber (trips/payments)</td><td>PostgreSQL</td><td>ACID, relational, consistency critical</td></tr>
+          <tr><td>Instagram (posts)</td><td>PostgreSQL + Cassandra</td><td>SQL for users/follows, Cassandra for feeds</td></tr>
+          <tr><td>Netflix (user prefs)</td><td>Cassandra + Redis</td><td>Scale + caching of recommendations</td></tr>
+          <tr><td>LinkedIn (connections)</td><td>Neo4j or custom graph</td><td>Relationship traversal (2nd/3rd degree connections)</td></tr>
+          <tr><td>Any app sessions</td><td>Redis</td><td>Fast key-value, TTL expiry, in-memory</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-green">
+      <div class="callout-title">Interview Tip — Always Justify</div>
+      <p>Never just say "I'll use MongoDB". Say: <em style="color:#cbd5e1;">"I'll use Cassandra because we need high write throughput for 10M messages per second, the data is time-series in nature (message_id + timestamp), and we can tolerate eventual consistency since a slight delay in delivery receipts doesn't affect UX."</em> This is what separates good candidates from great ones.</p>
+    </div>
+  </div>
+
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="golden-rule-label">Key Takeaway — Phase 02</div>
+    <p>There is no perfect database. Every choice is a trade-off.<br>
+    Know <span style="color:var(--accent2);">what you're sacrificing</span> when you choose one,<br>
+    and <span style="color:var(--accent1-light);">justify it</span> against your system's actual requirements.</p>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-row">
+    <a class="nav-btn" href="phase-01-foundations.html">← Phase 01: Foundations</a>
+    <a class="nav-btn" href="phase-03-hld-core.html">Phase 03: HLD Core Components →</a>
+  </div>
+
+</div>
+</body>
+</html>
